@@ -21,8 +21,6 @@ openai-api = {git = "git@github.com:kiltia/openai-api.git"}
 black = "^23.3.0"
 pre-commit = "^3.3.3"
 isort = "^5.12.0"
-scikit-learn = "^1.3.0"
-seaborn = "^0.12.2"
 
 [build-system]
 requires = ["poetry-core"]
