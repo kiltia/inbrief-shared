@@ -1,29 +1,36 @@
 import logging
-from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures._base import TimeoutError
 from datetime import datetime
 
 import openai_api
+from embedders import get_embedders
 from telethon.errors.rpcerrorlist import MsgIdInvalidError
-from tqdm import tqdm
-from utils import DATE_FORMAT, DEFAULT_END_DATE, PAYLOAD_STRUCTURE
+from utils import (
+    DATE_FORMAT,
+    DEFAULT_END_DATE,
+    DEFAULT_PAYLOAD_STRUCTURE,
+    add_embedding_columns,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-def get_worker(channel_entity, client, social, markup, categories, model, max_retries):
-    def get_content(message):
+def get_worker(channel_entity, client, embedders, social, markup, **kwargs):
+    async def get_content(message):
         content = {
             "id": [message.id],
             "text": [message.message],
             "date": [message.date.strftime(DEFAULT_END_DATE)],
             "channel": [channel_entity.id],
         }
+
         if social:
             comments = []
             try:
-                for msg in client.iter_messages(channel_entity, reply_to=content["id"]):
+                async for msg in client.iter_messages(
+                    channel_entity, reply_to=content["id"]
+                ):
                     text = msg.text
                     if not (text is None):
                         comments.append(text)
@@ -42,10 +49,24 @@ def get_worker(channel_entity, client, social, markup, categories, model, max_re
         else:
             content["reactions"] = [None]
             content["comments"] = [None]
+
         if markup:
-            content["cls"] = [
-                openai_api.classify(message.message, categories, model, max_retries)
-            ]
+            classify_args = ["categories", "classify_model", "max_retries"]
+            args = [kwargs.pop(x) for x in classify_args]
+            if message.message == "":
+                content["cls"] = [None]
+            else:
+                content["cls"] = [openai_api.classify(message.message, *args)]
+
+        # TODO(nrydanov): Move embedding retrieval out of this function
+        # to enable batch processing on GPU to increase overall performance
+        for emb in embedders:
+            logging.info(emb)
+            if not message.message or message.message == "":
+                content[emb.get_label()] = [None]
+            else:
+                content[emb.get_label()] = [emb.get_embeddings([message.message])[0]]
+
         return content
 
     return get_content
@@ -55,84 +76,42 @@ def merge_payloads(collected, current):
     return {k: v1 + v2 for (k, v1), (k, v2) in zip(collected.items(), current.items())}
 
 
-def get_chunked_messages(it, size, end_date):
-    while True:
-        batch = []
-        stop = False
-        for _ in range(size):
-            try:
-                msg = next(it)
-                if msg.date.replace(tzinfo=None) > end_date:
-                    batch.append(next(it))
-                else:
-                    stop = True
-            except StopIteration:
-                stop = True
-        yield batch
-
-        if stop:
-            break
-
-
-def get_content_from_channel(
+async def get_content_from_channel(
     channel_entity,
     client,
+    embedders,
     offset_date=None,
     end_date=DEFAULT_END_DATE,
-    num_workers=8,
     **kwargs,
 ):
-    batch = PAYLOAD_STRUCTURE.copy()
+    batch = add_embedding_columns(DEFAULT_PAYLOAD_STRUCTURE.copy(), embedders)
     end_date = datetime.strptime(end_date, DATE_FORMAT)
     offset_date = datetime.strptime(offset_date, DATE_FORMAT) if offset_date else None
 
     api_iterator = client.iter_messages(channel_entity, offset_date=offset_date)
-    get_content = get_worker(channel_entity, client, **kwargs)
+    get_content = get_worker(channel_entity, client, embedders, **kwargs)
+    async for message in api_iterator:
+        try:
+            response = await get_content(message)
+            batch = merge_payloads(batch, response)
+        except TimeoutError:
+            logging.error("Received timeout when processing chunk, skipping.")
+            continue
 
-    for chunk in tqdm(get_chunked_messages(api_iterator, num_workers, end_date)):
-        with ThreadPoolExecutor(num_workers) as executor:
-            try:
-                # NOTE(nrydanov): Probably we need to find more appropriate timeout
-                processed_chunk = list(executor.map(get_content, chunk, timeout=30))
-            except TimeoutError:
-                logging.error("Received timeout when processing chunk, skipping.")
-                continue
-            for processed in processed_chunk:
-                batch = merge_payloads(batch, processed)
     return batch
 
 
-def parse_channels_by_links(client, channels, **parse_args):
-    payload = PAYLOAD_STRUCTURE.copy()
+async def parse_channels_by_links(client, channels, required_embedders, **parse_args):
+    logger.info("Getting all required embedders")
+    embedders = get_embedders(required_embedders)
+    payload = add_embedding_columns(DEFAULT_PAYLOAD_STRUCTURE.copy(), embedders)
 
     for channel in channels:
-        channel_entity = client.get_entity(channel)
-        print(f"Parsing {channel_entity.title} ...")
-        response = get_content_from_channel(channel_entity, client, **parse_args)
+        logger.info(f"Parsing channel ({channel})")
+        channel_entity = await client.get_entity(channel)
+        response = await get_content_from_channel(
+            channel_entity, client, embedders, **parse_args
+        )
         payload = merge_payloads(payload, response)
 
     return payload
-
-
-def get_all_clients_channels(client):
-    channels = []
-    for dialog in client.iter_dialogs():
-        if not dialog.is_group and dialog.is_channel:
-            channels.append(dialog.entity)
-    return channels
-
-
-def parse_client_channels(client, **parse_args):
-    result = {
-        "channel": [],
-        "id": [],
-        "text": [],
-        "date": [],
-        "comments": [],
-        "reactions": [],
-    }
-    channels_entity = get_all_clients_channels(client)
-    for channel_entity in channels_entity:
-        print(f"Parsing {channel_entity.title} ...")
-        get_content_from_channel(channel_entity, client, result, **parse_args)
-    return result
