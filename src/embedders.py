@@ -87,7 +87,10 @@ def init_embedders():
     candidates = EmbeddingSource.__subclasses__()
     for embedder in candidates:
         logger.info(f"Started loading {embedder.get_label()}")
-        obj = embedder()
+        try:
+            obj = embedder()
+        except Exception:
+            logging.error(f"Got exception while initializing {embedder.get_label()}")
         embedders.append(obj)
         logger.info(f"Finished loading {embedder.get_label()}")
 
@@ -98,5 +101,6 @@ def get_embedders(names: str):
     if names is None:
         return embedders
 
-    required = filter(lambda entry: entry.get_label() in names, embedders)
+    required = list(filter(lambda entry: entry.get_label() in names, embedders))
+
     return required

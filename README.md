@@ -16,3 +16,9 @@ This application is built using FastAPI, so you may use
 uvicorn --app-dir=src main:app --reload
 ```
 command.
+
+But since this service is a part of inbrief project, you may use `docker-compose up`
+in parent directory. 
+
+NOTE: As this service depends on `openai-api` repo, private ssh key is required
+to build image. You'll need to place `.id_ed25519` in `scraper` directory

@@ -21,7 +21,7 @@ def get_worker(channel_entity, client, embedders, social, markup, **kwargs):
         content = {
             "id": [message.id],
             "text": [message.message],
-            "date": [message.date.strftime(DEFAULT_END_DATE)],
+            "date": [message.date.strftime(DATE_FORMAT)],
             "channel": [channel_entity.id],
         }
 
@@ -46,9 +46,6 @@ def get_worker(channel_entity, client, embedders, social, markup, **kwargs):
                         for reaction in message.reactions.results
                     ]
                 ]
-        else:
-            content["reactions"] = [None]
-            content["comments"] = [None]
 
         if markup:
             classify_args = ["categories", "classify_model", "max_retries"]
@@ -61,7 +58,6 @@ def get_worker(channel_entity, client, embedders, social, markup, **kwargs):
         # TODO(nrydanov): Move embedding retrieval out of this function
         # to enable batch processing on GPU to increase overall performance
         for emb in embedders:
-            logging.info(emb)
             if not message.message or message.message == "":
                 content[emb.get_label()] = [None]
             else:
@@ -92,6 +88,8 @@ async def get_content_from_channel(
     get_content = get_worker(channel_entity, client, embedders, **kwargs)
     async for message in api_iterator:
         try:
+            if message.date.replace(tzinfo=None) < end_date:
+                break
             response = await get_content(message)
             batch = merge_payloads(batch, response)
         except TimeoutError:
