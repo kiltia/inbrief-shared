@@ -102,5 +102,4 @@ def get_embedders(names: str):
         return embedders
 
     required = list(filter(lambda entry: entry.get_label() in names, embedders))
-
     return required
