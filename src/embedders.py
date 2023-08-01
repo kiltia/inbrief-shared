@@ -33,8 +33,12 @@ class MiniLmEmbedder(EmbeddingSource):
     TOKENIZER = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
 
     # TODO(nrydanov): Pass default parameter from configuration file instead
-    def __init__(self, weights_path="models/mini-lm") -> None:
-        self.tokenizer = AutoTokenizer.from_pretrained(MiniLmEmbedder.TOKENIZER)
+    def __init__(self, weights_path=None) -> None:
+        if not weights_path:
+            weights_path = f"{CACHE_PATH}/mini-lm"
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            MiniLmEmbedder.TOKENIZER, cache_dir=weights_path
+        )
         self.model = AutoModel.from_pretrained(weights_path)
 
     def get_embeddings(self, inputs: list, **kwargs):
@@ -63,7 +67,7 @@ class FastTextEmbedder(EmbeddingSource):
     # TODO(nrydanov): Pass default parameter from configuration file instead
     def __init__(self, weights_path=None):
         if not weights_path:
-            weights_path = f"{CACHE_PATH}cc.ru.300.bin"
+            weights_path = f"{CACHE_PATH}/cc.ru.300.bin"
 
         self.model = ft.load_model(weights_path)
 

@@ -11,7 +11,7 @@ DEFAULT_PAYLOAD_STRUCTURE: dict = {
 SOCIAL_FEATURES = ["comments", "reactions"]
 LOGGING_FORMAT = "[%(levelname)s] [%(asctime)s] %(message)s"
 SESSION_PATH = "sessions"
-CACHE_PATH = "cache/"
+CACHE_PATH = "cache"
 
 
 def clean_text(text):
