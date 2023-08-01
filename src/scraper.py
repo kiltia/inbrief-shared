@@ -1,3 +1,4 @@
+import copy
 import logging
 from concurrent.futures._base import TimeoutError
 from datetime import datetime
@@ -9,7 +10,7 @@ from utils import (
     DATE_FORMAT,
     DEFAULT_END_DATE,
     DEFAULT_PAYLOAD_STRUCTURE,
-    add_embedding_columns,
+    add_optional_columns,
 )
 
 logger = logging.getLogger(__name__)
@@ -69,18 +70,20 @@ def get_worker(channel_entity, client, embedders, social, markup, **kwargs):
 
 
 def merge_payloads(collected, current):
-    return {k: v1 + v2 for (k, v1), (k, v2) in zip(collected.items(), current.items())}
+    for key in collected.keys():
+        collected[key] += current[key]
 
 
 async def get_content_from_channel(
     channel_entity,
     client,
     embedders,
+    scheme,
     offset_date=None,
     end_date=DEFAULT_END_DATE,
     **kwargs,
 ):
-    batch = add_embedding_columns(DEFAULT_PAYLOAD_STRUCTURE.copy(), embedders)
+    batch = copy.deepcopy(scheme)
     end_date = datetime.strptime(end_date, DATE_FORMAT)
     offset_date = datetime.strptime(offset_date, DATE_FORMAT) if offset_date else None
 
@@ -91,7 +94,7 @@ async def get_content_from_channel(
             if message.date.replace(tzinfo=None) < end_date:
                 break
             response = await get_content(message)
-            batch = merge_payloads(batch, response)
+            merge_payloads(batch, response)
         except TimeoutError:
             logging.error("Received timeout when processing chunk, skipping.")
             continue
@@ -102,14 +105,17 @@ async def get_content_from_channel(
 async def parse_channels_by_links(client, channels, required_embedders, **parse_args):
     logger.info("Getting all required embedders")
     embedders = get_embedders(required_embedders)
-    payload = add_embedding_columns(DEFAULT_PAYLOAD_STRUCTURE.copy(), embedders)
+    scheme = add_optional_columns(
+        DEFAULT_PAYLOAD_STRUCTURE, embedders, parse_args["markup"], parse_args["social"]
+    )
 
+    payload = copy.deepcopy(scheme)
     for channel in channels:
         logger.info(f"Parsing channel ({channel})")
         channel_entity = await client.get_entity(channel)
         response = await get_content_from_channel(
-            channel_entity, client, embedders, **parse_args
+            channel_entity, client, embedders, scheme, **parse_args
         )
-        payload = merge_payloads(payload, response)
+        merge_payloads(payload, response)
 
     return payload

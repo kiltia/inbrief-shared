@@ -6,18 +6,19 @@ ENV PIP_DEFAULT_TIMEOUT=200 \
     POETRY_VIRTUALENVS_IN_PROJECT=true
 
 ENV WD_NAME=/scraper
-ARG PRIVATE_KEY_PATH
+ARG PRIVATE_KEY_PATH=.id_ed25519
 
 WORKDIR $WD_NAME
 
-COPY poetry.lock pyproject.toml .
-ADD $PRIVATE_KEY_PATH /root/.ssh/id_ed25519
-RUN touch /root/.ssh/known_hosts
+COPY poetry.lock pyproject.toml . 
+COPY $PRIVATE_KEY_PATH /root/.ssh/id_ed25519
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
+
+RUN chmod 600 /root/.ssh/id_ed25519
 
 RUN pip install poetry==${POETRY_VERSION}
 RUN poetry config installer.max-workers 10 \
-        && poetry install --no-dev --no-interaction --no-ansi -vvv
+        && poetry install --only main --no-interaction --no-ansi -vvv
 
 FROM python:3.11-slim as runtime
 

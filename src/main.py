@@ -22,11 +22,12 @@ async def parse(payload: ParserRequest):
     session_path = f"{SESSION_PATH}/{creds.session}"
     logger.info("Started serving scrapping request")
     async with TelegramClient(session_path, creds.api_id, creds.api_hash) as client:
-        response = await parse_channels_by_links(client, **payload.dict())
+        response = await parse_channels_by_links(client, **payload.model_dump())
         logger.info("Saving data to dictionary")
         df = pd.DataFrame.from_dict(response)
+        df.dropna(inplace=True)
         df.to_json("output.json")
-        return response
+        return df.to_dict("list")
 
 
 @app.on_event("startup")

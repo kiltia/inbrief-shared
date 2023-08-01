@@ -7,9 +7,6 @@ DEFAULT_PAYLOAD_STRUCTURE: dict = {
     "id": [],
     "text": [],
     "date": [],
-    "comments": [],
-    "reactions": [],
-    "cls": [],
 }
 SOCIAL_FEATURES = ["comments", "reactions"]
 LOGGING_FORMAT = "[%(levelname)s] [%(asctime)s] %(message)s"
@@ -49,8 +46,12 @@ def clean_text(text):
     return text
 
 
-def add_embedding_columns(payload, embedders):
+def add_optional_columns(payload, embedders, social, markup):
     for embedder in embedders:
         payload[embedder.get_label()] = []
-
+    if social:
+        for feature in SOCIAL_FEATURES:
+            payload[feature] = []
+    if markup:
+        payload["cls"] = []
     return payload
