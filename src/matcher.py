@@ -3,9 +3,10 @@ from searchers.bm25_searcher.bm25_search import BM25Searcher
 
 
 class Matcher:
-    def __init__(self, texts, embeddings):
+    def __init__(self, texts, embeddings, dates):
         self.embeddings = embeddings
         self.texts = texts
+        self.dates = dates
 
     def get_stories(self, match_type="clustering", **args):
         if match_type == "clustering":
@@ -25,6 +26,8 @@ class Matcher:
             return None
         stories = []
         for num_texts in stories_nums:
+            story_date = [self.dates[i] for i in num_texts]
+            num_texts = [x for _, x in sorted(zip(story_date, num_texts))]
             story = []
             for num in num_texts:
                 story.append(self.texts[num])

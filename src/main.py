@@ -4,14 +4,14 @@ from matcher import Matcher
 
 app = Flask(__name__)
 app.config["API_SETTINGS"] = LinkerAPISettings()
-app.config["clustering"] = DefaultClusteringSettings().dict()
-app.config["bm25"] = DefaultSearcherSettings().dict()
+app.config["clustering"] = DefaultClusteringSettings().model_dump()
+app.config["bm25"] = DefaultSearcherSettings().model_dump()
 
 
 @app.route(app.config["API_SETTINGS"].get_stories, methods=["POST"])
 def get_stories():
     data = request.get_json()
-    matcher = Matcher(data["texts"], data["embeddings"])
+    matcher = Matcher(data["texts"], data["embeddings"], data["dates"])
     if (
         "method" in data
         and data["method"] in app.config["API_SETTINGS"].available_methods
@@ -20,7 +20,7 @@ def get_stories():
     elif not ("method" in data):
         method = app.config["API_SETTINGS"].default_method
     else:
-        return make_response("Method is unavailable!", 204)
+        return make_response("Specified matching method does not exist!", 204)
     config = app.config[method]
     if "config" in data:
         for i in config:
