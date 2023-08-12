@@ -13,7 +13,7 @@ COPY poetry.lock pyproject.toml .
 
 RUN pip install poetry==${POETRY_VERSION}
 RUN poetry config installer.max-workers 10 \
-        && poetry install --only main --no-interaction --no-ansi -vvv
+        && poetry install --only main --no-interaction --no-ansi
 
 FROM python:3.9-slim as runtime
 

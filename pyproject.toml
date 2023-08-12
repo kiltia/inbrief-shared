@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "inbrief-matcher"
+name = "inbrief-linker"
 version = "0.1.0"
 description = ""
 authors = ["Sergey Okunkov <sergeyokunkov@yandex.ru>"]
