@@ -93,8 +93,10 @@ def init_embedders():
         logger.info(f"Started loading {embedder.get_label()}")
         try:
             obj = embedder()
-        except Exception:
-            logging.error(f"Got exception while initializing {embedder.get_label()}")
+        except Exception as e:
+            logging.error(
+                f"Got exception while initializing {embedder.get_label()}: {e}"
+            )
         embedders.append(obj)
         logger.info(f"Finished loading {embedder.get_label()}")
 
