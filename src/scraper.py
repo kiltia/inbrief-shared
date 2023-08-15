@@ -14,7 +14,6 @@ from utils import (
 )
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 
 def get_worker(channel_entity, client, embedders, social, markup, **kwargs):

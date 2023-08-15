@@ -32,7 +32,9 @@ async def parse(payload: ParserRequest):
 
 @app.on_event("startup")
 async def main() -> None:
-    logging.basicConfig(format=LOGGING_FORMAT, datefmt="%m-%d %H:%M:%S", force=True)
+    logging.basicConfig(
+        format=LOGGING_FORMAT, datefmt="%m-%d %H:%M:%S", level=logging.INFO, force=True
+    )
     logger.info("Started loading embedders")
     init_embedders()
     openai.api_key = creds.openai_api_key
