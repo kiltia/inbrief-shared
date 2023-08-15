@@ -20,5 +20,5 @@ def clean_text(text):
     text = re.sub(r"@.*[\r\n]*", "", text, flags=re.MULTILINE)
     text = re.sub(r"#.*[\r\n]*", "", text, flags=re.MULTILINE)
     text = re.sub("[\[(\])]", "", text)
-    text = text.translate(str.maketrans("", "", string.punctuation))
+    text = text.translate(str.maketrans("", "", string.punctuation + "«»"))
     return text
