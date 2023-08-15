@@ -21,14 +21,14 @@ def get_stories():
         method = app.config["API_SETTINGS"].default_method
     else:
         return make_response("Specified matching method does not exist!", 204)
-    config = app.config[method]
+    config = app.config[method].copy()
     if "config" in data:
-        for i in config:
-            if i in data["config"]:
+        for i in data["config"]:
+            if i in config:
                 config[i] = data["config"][i]
             else:
                 return make_response("Bad argument", 204)
-    stories, num_texts_in_stories = matcher.get_stories(method, **app.config[method])
+    stories, num_texts_in_stories = matcher.get_stories(method, **config)
     return make_response(
         {"stories": stories, "num_texts_in_stories": num_texts_in_stories}
     )
