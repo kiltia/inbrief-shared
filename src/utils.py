@@ -1,3 +1,4 @@
+import copy
 import re
 
 DATE_FORMAT = "%m/%d/%y %H:%M:%S"
@@ -46,12 +47,13 @@ def clean_text(text):
     return text
 
 
-def add_optional_columns(payload, embedders, social, markup):
+def add_optional_columns(default_scheme, embedders, social, markup):
+    default_scheme = copy.deepcopy(default_scheme)
     for embedder in embedders:
-        payload[embedder.get_label()] = []
+        default_scheme[embedder.get_label()] = []
     if social:
         for feature in SOCIAL_FEATURES:
-            payload[feature] = []
+            default_scheme[feature] = []
     if markup:
-        payload["cls"] = []
-    return payload
+        default_scheme["cls"] = []
+    return default_scheme

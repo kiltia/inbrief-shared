@@ -16,18 +16,19 @@ logger = logging.getLogger(__name__)
 creds = Credentials()
 app = FastAPI()
 
+session_path = f"{SESSION_PATH}/{creds.session}"
+client = TelegramClient(session_path, creds.api_id, creds.api_hash)
+
 
 @app.post("/scraper/")
 async def parse(payload: ParserRequest):
-    session_path = f"{SESSION_PATH}/{creds.session}"
     logger.info("Started serving scrapping request")
-    async with TelegramClient(session_path, creds.api_id, creds.api_hash) as client:
-        response = await parse_channels_by_links(client, **payload.model_dump())
-        logger.info("Saving data to dictionary")
-        df = pd.DataFrame.from_dict(response)
-        df.dropna(inplace=True)
-        df.to_json("output.json")
-        return df.to_dict("list")
+    response = await parse_channels_by_links(client, **payload.model_dump())
+    logger.info("Saving data to dictionary")
+    df = pd.DataFrame.from_dict(response)
+    df.dropna(inplace=True)
+    df.to_json("output.json")
+    return df.to_dict("list")
 
 
 @app.on_event("startup")
@@ -38,3 +39,9 @@ async def main() -> None:
     logger.info("Started loading embedders")
     init_embedders()
     openai.api_key = creds.openai_api_key
+    await client.start()
+
+
+@app.on_event("shutdown")
+async def main() -> None:
+    await client.disconnect()
