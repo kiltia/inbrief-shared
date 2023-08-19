@@ -1,4 +1,4 @@
-## LinkerAPI
+## Linker
 
 This module use to combine texts in stories.
 
@@ -32,11 +32,19 @@ This method of matching use next arguments:
 * `semantic_threshold`: tuple, default=(0.93, 1.0) \
   The tuple with two float number, which contains upper bound and lower bound acceptable semantic similarity.
 
-### How to up it:
+### Running
 
-For starting this service you need write following command in current directory `matcher`:
+This application is built using FastAPI, so you may use
+```
+uvicorn --app-dir=src main:app
+```
+command.
 
-`# docker-compose up -d`
+NOTE: running this outside of container requires changing corresponding host
+and port in Supervisor service configuration.
+
+But since this service is a part of inbrief project, you may use `docker-compose up`/`docker-compose start linker`
+in any child directory. 
 
 ### How to use it:
 

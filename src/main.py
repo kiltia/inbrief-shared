@@ -1,43 +1,38 @@
+import logging
+
 from config import DefaultClusteringSettings, DefaultSearcherSettings, LinkerAPISettings
-from flask import Flask, make_response, request
+from fastapi import FastAPI
 from matcher import Matcher
+from models import LinkingRequest
+from utils import LOGGING_FORMAT
 
-app = Flask(__name__)
-app.config["API_SETTINGS"] = LinkerAPISettings()
-app.config["clustering"] = DefaultClusteringSettings().model_dump()
-app.config["bm25"] = DefaultSearcherSettings().model_dump()
-
-
-@app.route(app.config["API_SETTINGS"].get_stories, methods=["POST"])
-def get_stories():
-    data = request.get_json()
-    matcher = Matcher(data["texts"], data["embeddings"], data["dates"])
-    if (
-        "method" in data
-        and data["method"] in app.config["API_SETTINGS"].available_methods
-    ):
-        method = data["method"]
-    elif not ("method" in data):
-        method = app.config["API_SETTINGS"].default_method
-    else:
-        return make_response("Specified matching method does not exist!", 204)
-    config = app.config[method].copy()
-    if "config" in data:
-        for i in data["config"]:
-            if i in config:
-                config[i] = data["config"][i]
-            else:
-                return make_response("Bad argument", 204)
-    stories, num_texts_in_stories = matcher.get_stories(method, **config)
-    return make_response(
-        {"stories": stories, "num_texts_in_stories": num_texts_in_stories}
-    )
+app = FastAPI()
 
 
-@app.route("/", methods=["GET"])
+@app.post("/get_stories")
+def get_stories(request: LinkingRequest):
+    matcher = Matcher(request.texts, request.embeddings, request.dates)
+    stories, stories_nums = matcher.get_stories(request.method, **request.config)
+
+    response = {"stories": stories, "stories_nums": stories_nums}
+    return response
+
+
+@app.get("/")
 def hello_world():
-    return "Linker-API is running!"
+    return "Linker API is running!"
 
 
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000, threaded=True)
+@app.on_event("startup")
+async def main() -> None:
+    logging.basicConfig(
+        format=LOGGING_FORMAT, datefmt="%m-%d %H:%M:%S", level=logging.DEBUG, force=True
+    )
+    import ssl
+
+    try:
+        _create_unverified_https_context = ssl._create_unverified_context
+    except AttributeError:
+        pass
+    else:
+        ssl._create_default_https_context = _create_unverified_https_context

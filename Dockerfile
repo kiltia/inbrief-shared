@@ -25,4 +25,4 @@ ENV PATH="$WD_NAME/.venv/bin/:$PATH"
 COPY --from=builder $WD_NAME/.venv .venv
 COPY config config
 COPY src src
-CMD ["flask", "--app", "src/main", "run", "--host", "0.0.0.0", "--port", "5000", "--with-threads"]
+CMD ["uvicorn", "--app-dir", "src", "--host", "0.0.0.0", "main:app"]

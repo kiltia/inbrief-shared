@@ -1,4 +1,5 @@
 from clustering.clustering import get_clusters
+from models import LinkingMethod
 from searchers.bm25_searcher.bm25_search import BM25Searcher
 
 
@@ -8,10 +9,10 @@ class Matcher:
         self.texts = texts
         self.dates = dates
 
-    def get_stories(self, match_type="clustering", **args):
-        if match_type == "clustering":
+    def get_stories(self, method, **args):
+        if method == LinkingMethod.DBSCAN:
             stories_nums = get_clusters(self.embeddings, **args)
-        elif match_type == "bm25":
+        elif method == LinkingMethod.BM25:
             searcher = BM25Searcher(self.texts, self.embeddings)
             stories_nums = []
             noise_cluster = []
@@ -23,7 +24,8 @@ class Matcher:
                     noise_cluster.extend(top)
             stories_nums.append(noise_cluster)
         else:
-            return None
+            raise AttributeError(f"Unexpected linking method {method}")
+
         stories = []
         for num_texts in stories_nums:
             story_date = [self.dates[i] for i in num_texts]

@@ -1,8 +1,11 @@
 import re
 import string
+
 import numpy as np
 from numpy.linalg import norm
 from patterns import emoji_pattern
+
+LOGGING_FORMAT = "[%(levelname)s] [%(asctime)s] %(message)s"
 
 
 def cos_sim(embedding1, embedding2):
