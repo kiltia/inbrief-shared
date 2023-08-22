@@ -23,6 +23,5 @@ WORKDIR $WD_NAME
 ENV PATH="$WD_NAME/.venv/bin/:$PATH"
 
 COPY --from=builder $WD_NAME/.venv .venv
-COPY config config
 COPY src src
 CMD ["uvicorn", "--app-dir", "src", "--host", "0.0.0.0", "main:app"]
