@@ -10,11 +10,16 @@ ARG PRIVATE_KEY_PATH=.id_ed25519
 
 WORKDIR $WD_NAME
 
-COPY poetry.lock pyproject.toml . 
+COPY pyproject.toml poetry.lock* . 
 COPY $PRIVATE_KEY_PATH /root/.ssh/id_ed25519
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 RUN chmod 600 /root/.ssh/id_ed25519
+# TODO(nrydanov): Temporarily dependency to build transformers from source.
+# Need to remove it, when there's possibility to use pre-built package.
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+# ----
 
 RUN pip install poetry==${POETRY_VERSION}
 RUN poetry config installer.max-workers 10 \

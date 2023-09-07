@@ -1,4 +1,6 @@
 import logging
+import os
+import shutil
 from typing import List
 
 import fasttext as ft
@@ -69,6 +71,10 @@ class FastTextEmbedder(EmbeddingSource):
         if not weights_path:
             weights_path = f"{CACHE_PATH}/cc.ru.300.bin"
 
+        if not os.path.exists(weights_path):
+            ft.util.download_model("ru")
+            shutil.move("cc.ru.300.bin", weights_path)
+
         self.model = ft.load_model(weights_path)
 
     def get_embeddings(self, inputs):
@@ -95,7 +101,7 @@ def init_embedders():
             obj = embedder()
         except Exception as e:
             logging.error(
-                f"Got exception while initializing {embedder.get_label()}: {e}"
+                f"Got {type(e).__name__} exception while initializing {embedder.get_label()}: {e}"
             )
         embedders.append(obj)
         logger.info(f"Finished loading {embedder.get_label()}")
