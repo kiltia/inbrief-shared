@@ -1,7 +1,8 @@
 from typing import List
 
 from pydantic import BaseModel
-from utils import DEFAULT_END_DATE
+
+from shared.utils import DEFAULT_END_DATE
 
 
 class ParserRequest(BaseModel):

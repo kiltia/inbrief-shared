@@ -8,12 +8,13 @@ import fasttext.util
 import openai_api
 from rb_tocase import Case
 from transformers import AutoModel, AutoTokenizer
-from utils import CACHE_PATH, clean_text
+
+from shared.utils import CACHE_PATH, clean_text
 
 logger = logging.getLogger(__name__)
 
 
-class EmbeddingSource:
+class EmbeddingProvider:
     def get_embeddings(self, inputs: list, **kwargs):
         pass
 
@@ -22,7 +23,7 @@ class EmbeddingSource:
         return Case.to_kebab(self.__name__)
 
 
-class OpenAiEmbedder(EmbeddingSource):
+class OpenAiEmbedder(EmbeddingProvider):
     # TODO(nrydanov): Pass default parameter from configuration file instead
     def __init__(self, model: str = "text-embedding-ada-002") -> None:
         self.model = model
@@ -31,8 +32,8 @@ class OpenAiEmbedder(EmbeddingSource):
         return openai_api.get_embeddings(inputs, self.model)
 
 
-class MiniLmEmbedder(EmbeddingSource):
-    TOKENIZER = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+class MiniLmEmbedder(EmbeddingProvider):
+    TOKENIZER = "nreimers/mmarco-mMiniLMv2-L12-H384-v1"
 
     # TODO(nrydanov): Pass default parameter from configuration file instead
     def __init__(self, weights_path=None) -> None:
@@ -65,7 +66,7 @@ class MiniLmEmbedder(EmbeddingSource):
         return results
 
 
-class FastTextEmbedder(EmbeddingSource):
+class FastTextEmbedder(EmbeddingProvider):
     # TODO(nrydanov): Pass default parameter from configuration file instead
     def __init__(self, weights_path=None):
         if not weights_path:
@@ -88,13 +89,13 @@ class FastTextEmbedder(EmbeddingSource):
         return embeddings
 
 
-embedders: List[EmbeddingSource] = []
+embedders: List[EmbeddingProvider] = []
 
 
 def init_embedders():
     global embedders
 
-    candidates = EmbeddingSource.__subclasses__()
+    candidates = EmbeddingProvider.__subclasses__()
     for embedder in candidates:
         logger.info(f"Started loading {embedder.get_label()}")
         try:

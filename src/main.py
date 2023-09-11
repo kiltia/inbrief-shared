@@ -7,9 +7,10 @@ from embedders import init_embedders
 from fastapi import FastAPI
 from models import ParserRequest
 from telethon import TelegramClient
-from utils import LOGGING_FORMAT, SESSION_PATH
+from utils import SESSION_PATH
 
 from scraper import parse_channels_by_links
+from shared.utils import LOGGING_FORMAT
 
 logger = logging.getLogger(__name__)
 
@@ -43,5 +44,5 @@ async def main() -> None:
 
 
 @app.on_event("shutdown")
-async def main() -> None:
+async def disconnect() -> None:
     await client.disconnect()

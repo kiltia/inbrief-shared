@@ -1,37 +1,3 @@
-FROM python:3.11 AS builder
+FROM inbrief-base:latest
 
-ENV PIP_DEFAULT_TIMEOUT=200 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    POETRY_VERSION=1.5.1 \
-    POETRY_VIRTUALENVS_IN_PROJECT=true
-
-ENV WD_NAME=/scraper
-ARG PRIVATE_KEY_PATH=.id_ed25519
-
-WORKDIR $WD_NAME
-
-COPY pyproject.toml poetry.lock* . 
-COPY $PRIVATE_KEY_PATH /root/.ssh/id_ed25519
-RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
-
-RUN chmod 600 /root/.ssh/id_ed25519
-# TODO(nrydanov): Temporarily dependency to build transformers from source.
-# Need to remove it, when there's possibility to use pre-built package.
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
-# ----
-
-RUN pip install poetry==${POETRY_VERSION}
-RUN poetry config installer.max-workers 10 \
-        && poetry install --only main --no-interaction --no-ansi
-
-FROM python:3.11-slim as runtime
-
-ENV WD_NAME=/scraper
-WORKDIR $WD_NAME
-
-ENV PATH="$WD_NAME/.venv/bin/:$PATH"
-
-COPY --from=builder $WD_NAME/.venv .venv
 COPY src src
-CMD ["uvicorn", "--app-dir", "src", "--host", "0.0.0.0", "main:app"]

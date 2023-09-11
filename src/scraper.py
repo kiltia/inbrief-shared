@@ -6,12 +6,9 @@ from datetime import datetime
 import openai_api
 from embedders import get_embedders
 from telethon.errors.rpcerrorlist import MsgIdInvalidError
-from utils import (
-    DATE_FORMAT,
-    DEFAULT_END_DATE,
-    DEFAULT_PAYLOAD_STRUCTURE,
-    add_optional_columns,
-)
+from utils import DEFAULT_PAYLOAD_STRUCTURE, add_optional_columns
+
+from shared.utils import DATE_FORMAT, DEFAULT_END_DATE
 
 logger = logging.getLogger(__name__)
 
