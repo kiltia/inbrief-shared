@@ -1,23 +1,14 @@
-import pathlib
-from importlib.machinery import SourceFileLoader
-
-import nltk
-from gensim.summarization.bm25 import BM25
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from pymorphy3 import MorphAnalyzer
+from rank_bm25 import BM25Okapi
 
-utils = SourceFileLoader(
-    "utils", str(pathlib.Path(__file__).parent.resolve() / "../../utils.py")
-).load_module()
-
-nltk.download("stopwords")
-nltk.download("punkt")
+import shared.utils
 
 
 def get_tokens(text):
     morph = MorphAnalyzer()
-    text = utils.clean_text(text)
+    text = shared.utils.clean_text(text, remove_punctuation=True)
     stop_words = stopwords.words("russian")
     stop_words.extend(stopwords.words("english"))
     return [
@@ -32,7 +23,7 @@ class BM25Searcher:
         self.corpus = texts
         self.tokenizer = tokenizer
         tok_corpus = [self.tokenizer(text) for text in self.corpus]
-        self.bm25 = BM25(tok_corpus)
+        self.bm25 = BM25Okapi(tok_corpus)
         self.embeddings = embeddings
         self.used = [False for _ in self.corpus]
 
@@ -54,7 +45,7 @@ class BM25Searcher:
             if score > threshold:
                 top.append(
                     (
-                        utils.get_class_score(
+                        shared.utils.get_class_score(
                             self.embeddings[num], self.embeddings[text_num]
                         ),
                         num,

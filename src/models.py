@@ -1,12 +1,8 @@
-from enum import Enum
 from typing import List
 
 from pydantic import BaseModel
 
-
-class LinkingMethod(Enum):
-    DBSCAN = "dbscan"
-    BM25 = "bm25"
+from shared.models import LinkingMethod
 
 
 class LinkingRequest(BaseModel):

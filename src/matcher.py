@@ -1,6 +1,7 @@
 from clustering.clustering import get_clusters
-from models import LinkingMethod
 from searchers.bm25_searcher.bm25_search import BM25Searcher
+
+from shared.models import LinkingMethod
 
 
 class Matcher:

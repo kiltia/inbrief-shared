@@ -1,10 +1,10 @@
 import logging
 
-from config import DefaultClusteringSettings, DefaultSearcherSettings, LinkerAPISettings
 from fastapi import FastAPI
 from matcher import Matcher
 from models import LinkingRequest
-from utils import LOGGING_FORMAT
+
+from shared.utils import LOGGING_FORMAT
 
 app = FastAPI()
 
@@ -28,11 +28,3 @@ async def main() -> None:
     logging.basicConfig(
         format=LOGGING_FORMAT, datefmt="%m-%d %H:%M:%S", level=logging.DEBUG, force=True
     )
-    import ssl
-
-    try:
-        _create_unverified_https_context = ssl._create_unverified_context
-    except AttributeError:
-        pass
-    else:
-        ssl._create_default_https_context = _create_unverified_https_context
