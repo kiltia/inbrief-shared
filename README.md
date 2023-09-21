@@ -1,11 +1,11 @@
 ## Linker
 
-This module use to combine texts in stories.
+This module is used to combine texts in stories.
 
-### How it works:
+### About this service
 This module contains two methods of matching texts: clustering and hand-wrote search engine.
 
-#### Clustering (module clustering.clustering)
+#### DBScan (module clustering.clustering)
 This method based on algorithm DBSCAN. We chose this algorithm because it work fast and doesn't require specifying number of clusters. This is good in our project, where matcher doesn't know how many stories it can match from gotten texts.
 
 This method of matching use next arguments:
@@ -46,17 +46,32 @@ and port in Supervisor service configuration.
 But since this service is a part of inbrief project, you may use `docker-compose up`/`docker-compose start linker`
 in any child directory. 
 
-### How to use it:
+## API
 
-First, you need to up this service. Next you need to send post request for this service with next parameters:
+Port: 6002 -> 8000
 
-* `texts`: array \
+### POST /get_stories
+- `texts`: array \
   The array with initial texts.
-* `embeddings`: array \
+- `embeddings`: array \
   The array with embeddings of initial texts.
-* `method`: str, default='clustering' \
-  The name of matching method. Available methods: clustering, bm25.
-* `config`: dict, optional\
+- `method`: enum, default=`"dbscan"` \
+  The name of matching method. Available methods: `"dbscan"`, `"bm25"`.
+- `config`: dict, optional\
   The dict with parameters for using matching method.
 
 This service returns json with array of stories and array of number initial texts in stories.
+
+Example request:
+```
+{
+  "story" : ["text", "text"],
+  "embeddings" : [[0, 1, 2, 0], [2, 1, 0, 3]]
+  "method" : "dbscan",
+  "config" : {
+    "eps" : 0.5,
+    "min_samples" : 2,
+    "metric" : "l2"
+  }
+}
+```
