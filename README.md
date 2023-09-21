@@ -3,6 +3,8 @@
 This module is responsible for information retrieval — text data, embeddings,
 social features, etc.
 
+## Configuration
+
 To work with it you need to create Telegram application, add `session_path`, `api_id` and `api_hash` fields in .env file and place it to `config` folder.
 
 NOTE: if you want to use embeddings from OpenAI API, you also need to pass
