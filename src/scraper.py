@@ -2,10 +2,13 @@ import copy
 import logging
 from concurrent.futures._base import TimeoutError
 from datetime import datetime
+from typing import List
 
 import openai_api
-from embedders import get_embedders
+from embedders import EmbeddingProvider, get_embedders
+from telethon import TelegramClient
 from telethon.errors.rpcerrorlist import MsgIdInvalidError
+from telethon.tl.functions.messages import GetDialogFiltersRequest
 from utils import DEFAULT_PAYLOAD_STRUCTURE, add_optional_columns
 
 from shared.utils import DATE_FORMAT, DEFAULT_END_DATE
@@ -13,13 +16,20 @@ from shared.utils import DATE_FORMAT, DEFAULT_END_DATE
 logger = logging.getLogger(__name__)
 
 
-def get_worker(channel_entity, client, embedders, social, markup, **kwargs):
+def get_worker(
+    channel_entity,
+    client: TelegramClient,
+    embedders: List[EmbeddingProvider],
+    social: bool,
+    markup: bool,
+    **kwargs,
+):
     async def get_content(message):
         content = {
             "id": [message.id],
             "text": [message.message],
             "date": [message.date.strftime(DATE_FORMAT)],
-            "channel": [channel_entity.id],
+            "channel": [channel_entity.channel_id],
         }
 
         if social:
@@ -58,32 +68,38 @@ def get_worker(channel_entity, client, embedders, social, markup, **kwargs):
             if not message.message or message.message == "":
                 content[emb.get_label()] = [None]
             else:
-                content[emb.get_label()] = [emb.get_embeddings([message.message])[0]]
+                content[emb.get_label()] = [
+                    emb.get_embeddings([message.message])[0]
+                ]
 
         return content
 
     return get_content
 
 
-def merge_payloads(collected, current):
+def merge_payloads(collected: dict, current: dict):
     for key in collected.keys():
         collected[key] += current[key]
 
 
 async def get_content_from_channel(
     channel_entity,
-    client,
-    embedders,
-    scheme,
+    client: TelegramClient,
+    embedders: List[EmbeddingProvider],
+    scheme: dict,
     offset_date=None,
     end_date=DEFAULT_END_DATE,
     **kwargs,
 ):
     batch = copy.deepcopy(scheme)
     end_date = datetime.strptime(end_date, DATE_FORMAT)
-    offset_date = datetime.strptime(offset_date, DATE_FORMAT) if offset_date else None
+    offset_date = (
+        datetime.strptime(offset_date, DATE_FORMAT) if offset_date else None
+    )
 
-    api_iterator = client.iter_messages(channel_entity, offset_date=offset_date)
+    api_iterator = client.iter_messages(
+        channel_entity, offset_date=offset_date
+    )
     get_content = get_worker(channel_entity, client, embedders, **kwargs)
     async for message in api_iterator:
         try:
@@ -98,17 +114,25 @@ async def get_content_from_channel(
     return batch
 
 
-async def parse_channels_by_links(client, channels, required_embedders, **parse_args):
+async def parse_channels_by_links(
+    client: TelegramClient,
+    chat_folder_link: str,
+    required_embedders: List[str],
+    **parse_args,
+):
     logger.info("Getting all required embedders")
     embedders = get_embedders(required_embedders)
     scheme = add_optional_columns(
-        DEFAULT_PAYLOAD_STRUCTURE, embedders, parse_args["markup"], parse_args["social"]
+        DEFAULT_PAYLOAD_STRUCTURE,
+        embedders,
+        parse_args["markup"],
+        parse_args["social"],
     )
 
+    channels = (await client(GetDialogFiltersRequest()))[2].include_peers
     payload = copy.deepcopy(scheme)
-    for channel in channels:
-        logger.info(f"Parsing channel ({channel})")
-        channel_entity = await client.get_entity(channel)
+    for channel_entity in channels:
+        logger.info(f"Parsing channel: {channel_entity.channel_id}")
         response = await get_content_from_channel(
             channel_entity, client, embedders, scheme, **parse_args
         )

@@ -108,11 +108,13 @@ def init_embedders():
         logger.info(f"Finished loading {embedder.get_label()}")
 
 
-def get_embedders(names: str):
+def get_embedders(names: List[str]) -> List[EmbeddingProvider]:
     global embedders
 
     if names is None:
         return embedders
 
-    required = list(filter(lambda entry: entry.get_label() in names, embedders))
+    required = list(
+        filter(lambda entry: entry.get_label() in names, embedders)
+    )
     return required
