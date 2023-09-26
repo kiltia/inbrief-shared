@@ -8,7 +8,7 @@ import openai_api
 from embedders import EmbeddingProvider, get_embedders
 from telethon import TelegramClient
 from telethon.errors.rpcerrorlist import MsgIdInvalidError
-from telethon.tl.functions.messages import GetDialogFiltersRequest
+from telethon.tl.functions.chatlists import CheckChatlistInviteRequest
 from utils import DEFAULT_PAYLOAD_STRUCTURE, add_optional_columns
 
 from shared.utils import DATE_FORMAT, DEFAULT_END_DATE
@@ -29,7 +29,7 @@ def get_worker(
             "id": [message.id],
             "text": [message.message],
             "date": [message.date.strftime(DATE_FORMAT)],
-            "channel": [channel_entity.channel_id],
+            "channel": [channel_entity.id],
         }
 
         if social:
@@ -128,11 +128,11 @@ async def parse_channels_by_links(
         parse_args["markup"],
         parse_args["social"],
     )
-
-    channels = (await client(GetDialogFiltersRequest()))[2].include_peers
+    slug = chat_folder_link.split("/")[-1]
+    channels = (await client(CheckChatlistInviteRequest(slug))).chats
     payload = copy.deepcopy(scheme)
     for channel_entity in channels:
-        logger.info(f"Parsing channel: {channel_entity.channel_id}")
+        logger.info(f"Parsing channel: {channel_entity.id}")
         response = await get_content_from_channel(
             channel_entity, client, embedders, scheme, **parse_args
         )
