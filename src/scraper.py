@@ -9,7 +9,11 @@ from embedders import EmbeddingProvider, get_embedders
 from telethon import TelegramClient
 from telethon.errors.rpcerrorlist import MsgIdInvalidError
 from telethon.tl.functions.chatlists import CheckChatlistInviteRequest
-from utils import DEFAULT_PAYLOAD_STRUCTURE, add_optional_columns
+from utils import (
+    DEFAULT_PAYLOAD_STRUCTURE,
+    add_optional_columns,
+    make_references_on_message,
+)
 
 from shared.utils import DATE_FORMAT, DEFAULT_END_DATE
 
@@ -31,7 +35,6 @@ def get_worker(
             "date": [message.date.strftime(DATE_FORMAT)],
             "channel": [channel_entity.id],
         }
-
         if social:
             comments = []
             try:
@@ -79,7 +82,8 @@ def get_worker(
 
 def merge_payloads(collected: dict, current: dict):
     for key in collected.keys():
-        collected[key] += current[key]
+        if key in current:
+            collected[key] += current[key]
 
 
 async def get_content_from_channel(
@@ -135,6 +139,9 @@ async def parse_channels_by_links(
         logger.info(f"Parsing channel: {channel_entity.id}")
         response = await get_content_from_channel(
             channel_entity, client, embedders, scheme, **parse_args
+        )
+        response = make_references_on_message(
+            f"t.me/{channel_entity.username}", response
         )
         merge_payloads(payload, response)
 
