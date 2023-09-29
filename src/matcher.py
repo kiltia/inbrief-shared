@@ -28,11 +28,13 @@ class Matcher:
             raise AttributeError(f"Unexpected linking method {method}")
 
         stories = []
-        for num_texts in stories_nums:
-            story_date = [self.dates[i] for i in num_texts]
-            num_texts = [x for _, x in sorted(zip(story_date, num_texts))]
+        for i in range(len(stories_nums)):
+            story_date = [self.dates[i] for i in stories_nums[i]]
+            stories_nums[i] = [
+                x for _, x in sorted(zip(story_date, stories_nums[i]))
+            ]
             story = []
-            for num in num_texts:
+            for num in stories_nums[i]:
                 story.append(self.texts[num])
             stories.append(story)
         return stories, stories_nums
