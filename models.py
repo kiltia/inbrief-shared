@@ -1,5 +1,4 @@
 from enum import Enum
-from ordered_enum import OrderedEnum
 from typing import List
 
 from pydantic import BaseModel
