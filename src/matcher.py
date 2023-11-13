@@ -19,7 +19,7 @@ class Matcher:
             noise_cluster = []
             for i in range(len(self.texts)):
                 top, noise = searcher.search_in_deep(text_num=i, **args)
-                if top and not (noise):
+                if top and not noise:
                     stories_nums.append(top)
                 else:
                     noise_cluster.extend(top)
@@ -31,10 +31,15 @@ class Matcher:
         for i in range(len(stories_nums)):
             story_date = [self.dates[i] for i in stories_nums[i]]
             stories_nums[i] = [
-                x for _, x in sorted(zip(story_date, stories_nums[i]))
+                x
+                for _, x in sorted(
+                    zip(story_date, stories_nums[i], strict=True)
+                )
             ]
             story = []
             for num in stories_nums[i]:
                 story.append(self.texts[num])
             stories.append(story)
-        return stories, stories_nums
+        return stories, list(
+            sorted(stories_nums, key=lambda x: len(x), reverse=True)
+        )

@@ -1,7 +1,8 @@
 import pandas as pd
-from config import ElasticSettings
 from elasticsearch import Elasticsearch
 from elasticsearch_searcher import add_documents, drop_index
+
+from config import ElasticSettings
 
 if __name__ == "__main__":
     elastic_config = ElasticSettings()

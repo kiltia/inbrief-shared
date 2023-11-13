@@ -14,7 +14,7 @@ def get_tokens(text):
     return [
         morph.normal_forms(i)[0]
         for i in word_tokenize(text.lower())
-        if not (i in stop_words)
+        if i not in stop_words
     ]
 
 

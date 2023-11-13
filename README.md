@@ -1,4 +1,4 @@
-## Linker
+## Linker (API may be changed)
 
 This module is used to combine texts in stories.
 
