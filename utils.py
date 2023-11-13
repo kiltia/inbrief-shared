@@ -6,10 +6,11 @@ from numpy.linalg import norm
 
 from shared.patterns import emoji_pattern
 
-LOGGING_FORMAT = "[%(levelname)s] [%(asctime)s] %(message)s"
-DATE_FORMAT = "%m/%d/%y %H:%M:%S"
+DATE_FORMAT = "%d/%m/%y %H:%M:%S"
+DB_DATE_FORMAT = "%y-%m-%d %H:%M:%S"
 DEFAULT_END_DATE = "01/01/01 00:00:00"
 CACHE_PATH = "cache"
+SHARED_CONFIG_PATH = "../config"
 
 
 def cos_sim(embedding1, embedding2):

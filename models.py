@@ -1,12 +1,23 @@
+import json
 from enum import Enum
 from typing import List
+from uuid import UUID
 
 from pydantic import BaseModel
 
-from shared.utils import DEFAULT_END_DATE
+
+class JSONSettings(BaseModel):
+    def __init__(self, path: str):
+        with open(path, "r") as f:
+            config_data = json.load(f)
+            return super().__init__(**config_data)
+
+    class Config:
+        populate_by_name = True
 
 
 class PresetData(BaseModel):
+    preset_name: str
     chat_folder_link: str
     editor_prompt: str
 
@@ -59,46 +70,102 @@ class Density(str, Enum):
 
 
 class Config(BaseModel):
-    # NOTE(nrydanov): Isn't expected to give end-user possibility to choose
-    # some of those parameters, but it's required for now
     embedding_source: EmbeddingSource
     linking_method: LinkingMethod
     summary_method: SummaryMethod
 
 
-class Payload(BaseModel):
-    # TODO(nrydanov): Change str for dates to datetime.time validation (#78)
-    end_date: str
-    offset_date: str | None = None
-    preset_data: PresetData
+class BaseRequest(BaseModel):
+    pass
 
 
-class Request(BaseModel):
-    config: Config
-    payload: Payload
-    required_density: List[Density]
+class ExternalRequest(BaseRequest):
+    chat_id: int
 
 
-class ParserRequest(BaseModel):
-    chat_folder_link: str
+# Scraper API
+
+
+class ParseRequest(BaseRequest):
+    channels: List[int]
     required_embedders: List[str] | None = None
     offset_date: str | None = None
-    end_date: str = DEFAULT_END_DATE
+    end_date: str
     social: bool = False
-    markup: bool = False
-    classify_model: str = "gpt-3.5-turbo"
-    max_retries: int = 1
 
 
-class LinkingRequest(BaseModel):
-    texts: List[str]
+class SyncRequest(BaseRequest):
+    chat_folder_link: str
+
+
+# Linker API
+
+
+class LinkingRequest(BaseRequest):
+    text: List[str]
     embeddings: List[List[float]]
-    dates: List[str]
+    date: List[str]
+    source_id: List[int]
+    channel_id: List[int]
     method: LinkingMethod
     config: dict
 
 
-class SummaryRequest(BaseModel):
-    story: List[str]
-    method: SummaryMethod = SummaryMethod.BART
+# Summarizer API
+
+
+class SummaryRequest(BaseRequest):
+    summary_id: UUID
+    story_id: UUID
+    config_id: int
+    chat_id: int
     density: Density
+
+
+# Editor
+
+
+class EditorRequest(BaseRequest):
+    summary_id: UUID
+    model: str = "gpt-4-1106-preview"
+    style: str = "влиятельный политик"
+    density: Density
+
+
+# Supervisor API
+
+
+class SummarizeRequest(ExternalRequest):
+    config_id: int
+    story_id: str
+    required_density: List[Density]
+
+
+class FetchRequest(ExternalRequest):
+    end_date: str
+    offset_date: str | None = None
+
+
+class CallbackPostRequest(BaseRequest):
+    callback_data: dict
+
+
+class CallbackPatchRequest(BaseRequest):
+    callback_id: UUID
+    callback_data: dict
+
+
+class UserRequest(ExternalRequest):
+    chat_id: int
+
+
+class ChangePresetRequest(BaseRequest):
+    cur_preset: UUID
+
+
+class PartialPresetUpdate(ExternalRequest):
+    preset_id: UUID
+    preset_name: str | None = None
+    chat_folder_link: str | None = None
+    editor_prompt: str | None = None
+    inactive: bool | None = None
