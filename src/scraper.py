@@ -1,23 +1,19 @@
-import copy
+import json
 import logging
 from concurrent.futures._base import TimeoutError
 from datetime import datetime
 from typing import List
 
-import openai_api
 from embedders import EmbeddingProvider, get_embedders
 from telethon import TelegramClient
+from telethon.errors.rpcbaseerrors import BadRequestError
 from telethon.errors.rpcerrorlist import MsgIdInvalidError
 from telethon.tl.functions.chatlists import CheckChatlistInviteRequest
-from utils import (
-    DEFAULT_PAYLOAD_STRUCTURE,
-    add_optional_columns,
-    make_references_on_message,
-)
 
-from shared.utils import DATE_FORMAT, DEFAULT_END_DATE
+from shared.entities import Folder, Source
+from shared.utils import DATE_FORMAT
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("app")
 
 
 def get_worker(
@@ -25,15 +21,20 @@ def get_worker(
     client: TelegramClient,
     embedders: List[EmbeddingProvider],
     social: bool,
-    markup: bool,
     **kwargs,
 ):
-    async def get_content(message):
+    async def get_content(message) -> Source | None:
+        if message.message in ["", None]:
+            return None
+        logger.debug(f"Started getting content for {message.id}")
+        logger.debug("Parsing data from Telegram")
         content = {
-            "id": [message.id],
-            "text": [message.message],
-            "date": [message.date.strftime(DATE_FORMAT)],
-            "channel": [channel_entity.id],
+            "source_id": message.id,
+            "text": message.message,
+            "date": message.date.strftime(DATE_FORMAT),
+            "reference": f"t.me/{channel_entity.username}/{message.id}",
+            "channel_id": channel_entity.id,
+            "embeddings": {},
         }
         if social:
             comments = []
@@ -42,60 +43,54 @@ def get_worker(
                     channel_entity, reply_to=content["id"]
                 ):
                     text = msg.text
-                    if not (text is None):
+                    if text is not None:
                         comments.append(text)
             except MsgIdInvalidError:
-                comments = None
-            content["comments"] = [comments]
+                logger.warn(
+                    "Got invalid message ID while parsing, skipping..."
+                )
+            content.update({"comments": comments})
             if message.reactions is None:
-                content["reactions"] = [None]
+                content.update({"reactions": []})
             else:
-                content["reactions"] = [
-                    [
-                        (reaction.reaction.emoticon, reaction.count)
-                        for reaction in message.reactions.results
-                    ]
-                ]
+                content.update(
+                    {
+                        "reactions": [
+                            {
+                                "emoticon": reaction.reaction.emoticon,
+                                "count": reaction.count,
+                            }
+                            for reaction in message.reactions.results
+                        ]
+                    }
+                )
 
-        if markup:
-            classify_args = ["categories", "classify_model", "max_retries"]
-            args = [kwargs.pop(x) for x in classify_args]
-            if message.message == "":
-                content["cls"] = [None]
-            else:
-                content["cls"] = [openai_api.classify(message.message, *args)]
+            content["reactions"] = json.dumps(content["reactions"])
 
+        logger.debug("Started generating embeddings for text")
         # TODO(nrydanov): Move embedding retrieval out of this function
         # to enable batch processing on GPU to increase overall performance
         for emb in embedders:
-            if not message.message or message.message == "":
-                content[emb.get_label()] = [None]
-            else:
-                content[emb.get_label()] = [
-                    emb.get_embeddings([message.message])[0]
-                ]
+            content["embeddings"].update(
+                {emb.get_label(): emb.get_embeddings([message.message])[0]}
+            )
 
-        return content
+        content["embeddings"] = json.dumps(content["embeddings"])
+        logger.debug(f"Ended parsing {message.id}")
+        return Source.parse_obj(content)
 
     return get_content
-
-
-def merge_payloads(collected: dict, current: dict):
-    for key in collected.keys():
-        if key in current:
-            collected[key] += current[key]
 
 
 async def get_content_from_channel(
     channel_entity,
     client: TelegramClient,
     embedders: List[EmbeddingProvider],
-    scheme: dict,
+    end_date,
     offset_date=None,
-    end_date=DEFAULT_END_DATE,
     **kwargs,
-):
-    batch = copy.deepcopy(scheme)
+) -> List[Source]:
+    batch: List[Source] = []
     end_date = datetime.strptime(end_date, DATE_FORMAT)
     offset_date = (
         datetime.strptime(offset_date, DATE_FORMAT) if offset_date else None
@@ -109,8 +104,9 @@ async def get_content_from_channel(
         try:
             if message.date.replace(tzinfo=None) < end_date:
                 break
-            response = await get_content(message)
-            merge_payloads(batch, response)
+            source = await get_content(message)
+            if source is not None:
+                batch.append(source)
         except TimeoutError:
             logging.error("Received timeout when processing chunk, skipping.")
             continue
@@ -118,31 +114,41 @@ async def get_content_from_channel(
     return batch
 
 
-async def parse_channels_by_links(
-    client: TelegramClient,
-    chat_folder_link: str,
+async def retrieve_channels(ctx, chat_folder_link: str):
+    logger.info(f"Retrieving channels from link: {chat_folder_link}")
+
+    slug = chat_folder_link.split("/")[-1]
+    try:
+        channels = (await ctx.client(CheckChatlistInviteRequest(slug))).chats
+        ids = list(map(lambda x: x.id, channels))
+        entity = Folder(chat_folder_link=chat_folder_link, channels=ids)
+
+        await ctx.folder_repository.add_or_update(entity, ["channels"])
+    except BadRequestError:
+        entity = await ctx.folder_repository.get(
+            Folder, "chat_folder_link", chat_folder_link
+        )
+        ids = entity.channels
+    return ids
+
+
+async def parse_channels(
+    ctx,
+    channels: List[int],
     required_embedders: List[str],
     **parse_args,
-):
+) -> List[Source]:
     logger.info("Getting all required embedders")
+
+    client = ctx.client
     embedders = get_embedders(required_embedders)
-    scheme = add_optional_columns(
-        DEFAULT_PAYLOAD_STRUCTURE,
-        embedders,
-        parse_args["markup"],
-        parse_args["social"],
-    )
-    slug = chat_folder_link.split("/")[-1]
-    channels = (await client(CheckChatlistInviteRequest(slug))).chats
-    payload = copy.deepcopy(scheme)
-    for channel_entity in channels:
+    result: List[Source] = []
+    for channel_id in channels:
+        channel_entity = await client.get_entity(channel_id)
         logger.info(f"Parsing channel: {channel_entity.id}")
         response = await get_content_from_channel(
-            channel_entity, client, embedders, scheme, **parse_args
+            channel_entity, client, embedders, **parse_args
         )
-        response = make_references_on_message(
-            f"t.me/{channel_entity.username}", response
-        )
-        merge_payloads(payload, response)
+        result = result + response
 
-    return payload
+    return result

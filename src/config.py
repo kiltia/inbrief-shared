@@ -5,7 +5,6 @@ class Credentials(BaseSettings):
     session: str
     api_hash: str
     api_id: str
-    openai_api_key: str
 
     class Config:
         env_file = "./config/.env"

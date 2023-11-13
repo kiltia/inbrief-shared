@@ -5,13 +5,13 @@ from typing import List
 
 import fasttext as ft
 import fasttext.util
-import openai_api
 from rb_tocase import Case
 from transformers import AutoModel, AutoTokenizer
 
+import openai_api
 from shared.utils import CACHE_PATH, clean_text
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("app")
 
 
 class EmbeddingProvider:
@@ -92,11 +92,14 @@ class FastTextEmbedder(EmbeddingProvider):
 embedders: List[EmbeddingProvider] = []
 
 
-def init_embedders():
+def init_embedders(required_embedders: List[str]):
     global embedders
 
     candidates = EmbeddingProvider.__subclasses__()
     for embedder in candidates:
+        if embedder.get_label() not in required_embedders:
+            continue
+
         logger.info(f"Started loading {embedder.get_label()}")
         try:
             obj = embedder()

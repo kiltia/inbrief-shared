@@ -1,51 +1,95 @@
 import logging
 
 import openai
-import pandas as pd
-from config import Credentials
+from asgi_correlation_id import CorrelationIdMiddleware
+from databases import Database
 from embedders import init_embedders
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, status
 from telethon import TelegramClient
 from utils import SESSION_PATH
 
-from scraper import parse_channels_by_links
-from shared.models import ParserRequest
-from shared.utils import LOGGING_FORMAT
+from config import Credentials
+from scraper import parse_channels, retrieve_channels
+from shared.db import PgRepository, create_db_string
+from shared.entities import Folder, Source
+from shared.logging import configure_logging
+from shared.models import ParseRequest, SyncRequest
+from shared.resources import SharedResources
+from shared.routes import ScraperRoutes
+from shared.utils import SHARED_CONFIG_PATH
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("app")
 
-creds = Credentials()
 app = FastAPI()
-
-session_path = f"{SESSION_PATH}/{creds.session}"
-client = TelegramClient(session_path, creds.api_id, creds.api_hash)
+app.add_middleware(CorrelationIdMiddleware)
 
 
-@app.post("/scraper/")
-async def parse(request: ParserRequest):
+class Context:
+    def __init__(self):
+        self.creds = Credentials()
+        self.client = TelegramClient(
+            f"{SESSION_PATH}/dev.session",
+            self.creds.api_id,
+            self.creds.api_hash,
+        )
+        self.shared_settings = SharedResources(
+            f"{SHARED_CONFIG_PATH}/settings.json"
+        )
+        self.pg = Database(create_db_string(self.shared_settings.pg_creds))
+        self.folder_repository = PgRepository(self.pg, Folder._table_name)
+        self.source_repository = PgRepository(self.pg, Source._table_name)
+
+    async def init_db(self):
+        await self.pg.connect()
+
+    async def dispose_db(self):
+        await self.pg.disconnect()
+
+
+ctx = Context()
+
+
+@app.post(ScraperRoutes.PARSE)
+async def parse(request: ParseRequest, response: Response):
     logger.info("Started serving scrapping request")
-    response = await parse_channels_by_links(client, **request.model_dump())
-    logger.info("Saving data to dictionary")
-    df = pd.DataFrame.from_dict(response)
-    df.dropna(inplace=True)
-    df.to_json("output.json")
-    return df.to_dict("list")
+    entities = await parse_channels(ctx, **request.model_dump())
+    # TODO(nrydanov): Need to add caching there in case all posts for required
+    # time period are already stored in database (#137)
+    if entities:
+        await ctx.source_repository.add(entities, ignore_conflict=True)
+        logger.info("Data was saved to database successfully")
+    else:
+        response.status_code = status.HTTP_204_NO_CONTENT
+    return [
+        {
+            "source_id": x.source_id,
+            "text": x.text,
+            "embeddings": x.embeddings,
+            "date": x.date,
+            "channel_id": x.channel_id,
+        }
+        for x in entities
+    ]
+
+
+@app.post(ScraperRoutes.SYNC)
+async def sync(request: SyncRequest):
+    logger.info("Started serving fetch request")
+    response = await retrieve_channels(ctx, request.chat_folder_link)
+    return response
 
 
 @app.on_event("startup")
 async def main() -> None:
-    logging.basicConfig(
-        format=LOGGING_FORMAT,
-        datefmt="%m-%d %H:%M:%S",
-        level=logging.INFO,
-        force=True,
-    )
+    configure_logging()
     logger.info("Started loading embedders")
-    init_embedders()
-    openai.api_key = creds.openai_api_key
-    await client.start()
+    init_embedders(ctx.shared_settings.components.embedders)
+    openai.api_key = ctx.shared_settings.openai_api_key
+    await ctx.init_db()
+    await ctx.client.start()
 
 
 @app.on_event("shutdown")
 async def disconnect() -> None:
-    await client.disconnect()
+    await ctx.client.disconnect()
+    await ctx.dispose_db()
