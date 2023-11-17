@@ -14,7 +14,7 @@ from shared.routes import LinkerRoutes
 from shared.utils import SHARED_CONFIG_PATH
 
 app = FastAPI()
-app.add_middleware(CorrelationIdMiddleware)
+app.add_middleware(CorrelationIdMiddleware, validator=None)
 
 
 class Context:
