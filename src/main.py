@@ -21,7 +21,7 @@ from shared.utils import SHARED_CONFIG_PATH
 logger = logging.getLogger("app")
 
 app = FastAPI()
-app.add_middleware(CorrelationIdMiddleware)
+app.add_middleware(CorrelationIdMiddleware, validator=None)
 
 
 class Context:
@@ -51,13 +51,13 @@ ctx = Context()
 
 @app.post(ScraperRoutes.PARSE)
 async def parse(request: ParseRequest, response: Response):
-    logger.info("Started serving scrapping request")
+    logger.debug("Started serving scrapping request")
     entities = await parse_channels(ctx, **request.model_dump())
     # TODO(nrydanov): Need to add caching there in case all posts for required
     # time period are already stored in database (#137)
     if entities:
         await ctx.source_repository.add(entities, ignore_conflict=True)
-        logger.info("Data was saved to database successfully")
+        logger.debug("Data was saved to database successfully")
     else:
         response.status_code = status.HTTP_204_NO_CONTENT
     return [
@@ -74,7 +74,7 @@ async def parse(request: ParseRequest, response: Response):
 
 @app.post(ScraperRoutes.SYNC)
 async def sync(request: SyncRequest):
-    logger.info("Started serving fetch request")
+    logger.debug("Started serving fetch request")
     response = await retrieve_channels(ctx, request.chat_folder_link)
     return response
 
@@ -82,7 +82,7 @@ async def sync(request: SyncRequest):
 @app.on_event("startup")
 async def main() -> None:
     configure_logging()
-    logger.info("Started loading embedders")
+    logger.debug("Started loading embedders")
     init_embedders(ctx.shared_settings.components.embedders)
     openai.api_key = ctx.shared_settings.openai_api_key
     await ctx.init_db()

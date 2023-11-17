@@ -115,7 +115,7 @@ async def get_content_from_channel(
 
 
 async def retrieve_channels(ctx, chat_folder_link: str):
-    logger.info(f"Retrieving channels from link: {chat_folder_link}")
+    logger.debug(f"Retrieving channels from link: {chat_folder_link}")
 
     slug = chat_folder_link.split("/")[-1]
     try:
@@ -138,14 +138,14 @@ async def parse_channels(
     required_embedders: List[str],
     **parse_args,
 ) -> List[Source]:
-    logger.info("Getting all required embedders")
+    logger.debug("Getting all required embedders")
 
     client = ctx.client
     embedders = get_embedders(required_embedders)
     result: List[Source] = []
     for channel_id in channels:
         channel_entity = await client.get_entity(channel_id)
-        logger.info(f"Parsing channel: {channel_entity.id}")
+        logger.debug(f"Parsing channel: {channel_entity.id}")
         response = await get_content_from_channel(
             channel_entity, client, embedders, **parse_args
         )
