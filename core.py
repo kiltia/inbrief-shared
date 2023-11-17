@@ -60,7 +60,7 @@ def summarize(
     messages = get_summary_context(input, max_tokens)
     if additional_context is not None:
         messages.append({"role": "system", "content": additional_context})
-    logger.info(
+    logger.debug(
         f"Sending summary request to OpenAI with {count_tokens(messages, model)} tokens"
     )
     return (
@@ -86,7 +86,7 @@ async def asummarize(
     timeout=30,
 ):
     messages = get_summary_context(input, max_tokens)
-    logger.info(
+    logger.debug(
         f"Sending summary request to OpenAI with {count_tokens(messages, model)} tokens"
     )
     return await openai.ChatCompletion.acreate(
@@ -102,7 +102,7 @@ async def asummarize(
 @base_retry
 def get_title(input, model, max_tokens=30):
     messages = get_title_context(input, max_tokens)
-    logger.info(
+    logger.debug(
         f"Sending title request to OpenAI with {count_tokens(messages, model)} tokens"
     )
     return (
@@ -120,7 +120,7 @@ def get_title(input, model, max_tokens=30):
 @base_retry
 async def aget_title(input, model, max_tokens=25):
     messages = (get_title_context(input, max_tokens),)
-    logger.info(
+    logger.debug(
         f"Sending title request to OpenAI with {count_tokens(messages, model)} tokens"
     )
     return (
@@ -146,7 +146,7 @@ def edit(
     timeout=30,
 ):
     messages = get_editor_context(input, max_tokens, style)
-    logger.info(
+    logger.debug(
         f"Sending edit request to OpenAI with {count_tokens(messages, model)} tokens"
     )
     return (
@@ -172,7 +172,7 @@ async def aedit(
     timeout=30,
 ):
     messages = get_editor_context(input, max_tokens, style)
-    logger.info(
+    logger.debug(
         f"Sending edit request to OpenAI with {count_tokens(messages, model)} tokens"
     )
     return (
@@ -199,10 +199,10 @@ def classify_attempt(attempt, categories, max_retries, **kwargs):
 
     if attempt > max_retries:
         return None
-    logging.debug(f"Creating request {attempt + 1} for chat completion")
+    logger.debug(f"Creating request {attempt + 1} for chat completion")
     completion = openai.ChatCompletion.create(**kwargs)
     response = completion["choices"][0]["message"]["content"]
-    logging.debug(f"Got response from OpenAI: {response}")
+    logger.debug(f"Got response from OpenAI: {response}")
     status, value = validate_response(response, categories)
     if status:
         logging.debug("Response has correct format")
