@@ -36,8 +36,8 @@ class Context:
             f"{SHARED_CONFIG_PATH}/settings.json"
         )
         self.pg = Database(create_db_string(self.shared_settings.pg_creds))
-        self.folder_repository = PgRepository(self.pg, Folder._table_name)
-        self.source_repository = PgRepository(self.pg, Source._table_name)
+        self.folder_repository = PgRepository(self.pg, Folder)
+        self.source_repository = PgRepository(self.pg, Source)
 
     async def init_db(self):
         await self.pg.connect()

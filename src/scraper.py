@@ -126,7 +126,7 @@ async def retrieve_channels(ctx, chat_folder_link: str):
         await ctx.folder_repository.add_or_update(entity, ["channels"])
     except BadRequestError:
         entity = await ctx.folder_repository.get(
-            Folder, "chat_folder_link", chat_folder_link
+            "chat_folder_link", chat_folder_link
         )
         ids = entity.channels
     return ids
