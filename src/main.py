@@ -23,11 +23,9 @@ class Context:
             f"{SHARED_CONFIG_PATH}/settings.json"
         )
         self._pg = Database(create_db_string(self._shared_resources.pg_creds))
-        self.story_repository = PgRepository(self._pg, Story._table_name)
+        self.story_repository = PgRepository(self._pg, Story)
 
-        self.story_post_repository = PgRepository(
-            self._pg, StoryPost._table_name
-        )
+        self.story_post_repository = PgRepository(self._pg, StoryPost)
 
     async def init_db(self):
         await self._pg.connect()
