@@ -1,21 +1,24 @@
+import logging
 from typing import List, Type
 
 from asyncpg.exceptions import UniqueViolationError
 from databases import Database
-from pydantic import TypeAdapter
+from pydantic import BaseModel, TypeAdapter
 
-from shared.entities import Entity
 from shared.resources import DatabaseCredentials
 
+logger = logging.getLogger("app")
 
-def create_db_string(creds: DatabaseCredentials):
-    return f"{creds.driver}://{creds.username}:{creds.password}@{creds.url}:{creds.port}/{creds.db_name}"
+
+class Entity(BaseModel):
+    pass
 
 
 class AbstractRepository:
-    def __init__(self, db: Database, table_name: str):
+    def __init__(self, db: Database, entity: Type[Entity]):
         self._db = db
-        self._table_name = table_name
+        self._entity = entity
+        self._table_name = entity._table_name
 
     def _get_query_parameters(self, dump):
         keys = list(dump.keys())
@@ -23,7 +26,7 @@ class AbstractRepository:
         placeholders = ",".join(map(lambda x: f":{x}", keys))
         return columns, placeholders
 
-    async def add(self, entities, ignore_conflict=False):
+    async def add(self, entities: List[Entity], ignore_conflict=False):
         if not isinstance(entities, list):
             entities = [entities]
 
@@ -35,6 +38,7 @@ class AbstractRepository:
         columns, placeholders = self._get_query_parameters(dumps[0])
 
         query = f"INSERT INTO {self._table_name}({columns}) VALUES ({placeholders})"
+        logger.debug(f"Executing query: {query}")
 
         if ignore_conflict:
             query += " ON CONFLICT DO NOTHING"
@@ -47,15 +51,14 @@ class AbstractRepository:
         pk = entity._pk
         query_set = [f"{field} = :{field}" for field in fields]
         query = f"UPDATE {self._table_name} SET {','.join(query_set)} WHERE {pk} = :{pk}"
-
+        logger.debug(f"Executing query: {query}")
         await self._db.execute(
             query=query, values={k: dump[k] for k in fields} | {pk: dump[pk]}
         )
 
-    async def get(
-        self, cls: Type[Entity], field=None, value=None
-    ) -> List[Entity]:
+    async def get(self, field=None, value=None) -> List[Entity]:
         query = f"SELECT * FROM {self._table_name}"
+        logger.debug(f"Executing query: {query}")
         if field is not None:
             query += f" WHERE {field} = :{field}"
             rows = await self._db.fetch_all(query=query, values={field: value})
@@ -63,7 +66,9 @@ class AbstractRepository:
             rows = await self._db.fetch_all(query=query)
 
         mapped = map(
-            lambda row: TypeAdapter(cls).validate_python(dict(row._mapping)),
+            lambda row: TypeAdapter(self._entity).validate_python(
+                dict(row._mapping)
+            ),
             rows,
         )
 
@@ -76,3 +81,7 @@ class PgRepository(AbstractRepository):
             await self.add(entity)
         except UniqueViolationError:
             await self.update(entity, fields)
+
+
+def create_db_string(creds: DatabaseCredentials):
+    return f"{creds.driver}://{creds.username}:{creds.password}@{creds.url}:{creds.port}/{creds.db_name}"
