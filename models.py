@@ -16,6 +16,18 @@ class JSONSettings(BaseModel):
         populate_by_name = True
 
 
+def extend_enum(inherited_enum):
+    def wrapper(added_enum):
+        joined = {}
+        for item in inherited_enum:
+            joined[item.name] = item.value
+        for item in added_enum:
+            joined[item.name] = item.value
+        return Enum(added_enum.__name__, joined)
+
+    return wrapper
+
+
 class PresetData(BaseModel):
     preset_name: str
     chat_folder_link: str
@@ -23,7 +35,7 @@ class PresetData(BaseModel):
 
     @classmethod
     def get_fields(cls):
-        return list(cls.__fields__.keys())
+        return list(cls.model_fields.keys())
 
 
 class SummaryType(str, Enum):
@@ -37,10 +49,34 @@ class EmbeddingSource(str, Enum):
     MLM = "mlm"
 
 
-class LinkingMethod(str, Enum):
+class ClusteringMethod(str, Enum):
     DBSCAN = "dbscan"
+    KMeans = "kmeans"
+    AffinityPropagation = "affinity_propagation"
+    OPTICS = "optics"
+    SpectralClustering = "spectral_clustering"
+    AgglomerativeClustering = "agglomerative_clustering"
+
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
+
+@extend_enum(ClusteringMethod)
+class LinkingMethod(str, Enum):
     BM25 = "bm25"
     NO_LINKER = "no_linker"
+
+
+class OpenAIModels(str, Enum):
+    GPT3_TURBO = "gpt-3.5-turbo-1106"
+    GPT4 = "gpt-4"
+    GPT4_32k = "gpt-4-32k"
+    GPT4_TURBO = "gpt-4-1106-preview"
+
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
 
 
 class SummaryMethod(str, Enum):
@@ -148,6 +184,14 @@ class FetchRequest(ExternalRequest):
 
 class CallbackPostRequest(BaseRequest):
     callback_data: dict
+
+
+class ConfigPostRequest(BaseRequest):
+    config_id: int
+    embedding_source: str
+    linking_method: str
+    summary_method: str
+    editor_model: str
 
 
 class CallbackPatchRequest(BaseRequest):

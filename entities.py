@@ -96,7 +96,8 @@ class Config(Entity):
     embedding_source: str
     linking_method: str
     summary_method: str
-    relevance: bool
+    editor_model: str
+    inactive: bool
 
     _table_name: ClassVar[str] = "config"
     _pk: ClassVar[str] = "config_id"

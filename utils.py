@@ -34,5 +34,7 @@ def clean_text(text, remove_punctuation=False):
     text = re.sub(r"#.*[\r\n]*", "", text, flags=re.MULTILINE)
     text = re.sub("[\[(\])]", "", text)
     if remove_punctuation:
-        text = text.translate(str.maketrans("", "", string.punctuation + "«»"))
+        text = text.translate(
+            str.maketrans("", "", string.punctuation + "«»" + "—")
+        )
     return text

@@ -15,6 +15,7 @@ class SupervisorRoutes:
     PRESET = "/api/preset"
     CALLBACK = "/api/callback"
     REGISTER = "/api/user"
+    CONFIG = "/api/config"
 
 
 class SummarizerRoutes:
