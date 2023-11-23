@@ -1,7 +1,7 @@
-from clustering.clustering import get_clusters
+from clustering.clustering import Clustering
 from searchers.bm25_searcher.bm25_search import BM25Searcher
 
-from shared.models import LinkingMethod
+from shared.models import LinkingMethod, ClusteringMethod
 
 
 class Matcher:
@@ -11,8 +11,10 @@ class Matcher:
         self.dates = dates
 
     def get_stories(self, method, **args):
-        if method == LinkingMethod.DBSCAN:
-            stories_nums = get_clusters(self.embeddings, **args)
+        if ClusteringMethod.has_value(method.value):
+            stories_nums = Clustering(method.value).get_clusters(
+                self.embeddings, **args
+            )
         elif method == LinkingMethod.BM25:
             searcher = BM25Searcher(self.texts, self.embeddings)
             stories_nums = []

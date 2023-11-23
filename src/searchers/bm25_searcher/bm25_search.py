@@ -4,18 +4,18 @@ from pymorphy3 import MorphAnalyzer
 from rank_bm25 import BM25Okapi
 
 import shared.utils
+from shared.patterns import russian_stop_words
 
 
 def get_tokens(text):
     morph = MorphAnalyzer()
     text = shared.utils.clean_text(text, remove_punctuation=True)
-    stop_words = stopwords.words("russian")
+    stop_words = russian_stop_words
     stop_words.extend(stopwords.words("english"))
-    return [
-        morph.normal_forms(i)[0]
-        for i in word_tokenize(text.lower())
-        if i not in stop_words
+    tokenized_text = [
+        morph.normal_forms(i)[0] for i in word_tokenize(text.lower())
     ]
+    return [i for i in tokenized_text if i not in stop_words]
 
 
 class BM25Searcher:
