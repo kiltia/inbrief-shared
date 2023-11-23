@@ -28,7 +28,7 @@ class Context:
     def __init__(self):
         self.creds = Credentials()
         self.client = TelegramClient(
-            f"{SESSION_PATH}/dev.session",
+            f"{SESSION_PATH}/{self.creds.session}",
             self.creds.api_id,
             self.creds.api_hash,
         )
