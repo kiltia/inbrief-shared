@@ -7,6 +7,7 @@ from tenacity import (
     before_log,
     before_sleep_log,
     retry,
+    retry_if_exception,
     stop_after_attempt,
     wait_exponential,
 )
@@ -24,18 +25,19 @@ logger = logging.getLogger("app")
 
 
 base_retry = retry(
-    wait=wait_exponential(min=2, max=60, multiplier=2),
+    retry=retry_if_exception(openai.error.RateLimitError),
+    wait=wait_exponential(min=2, max=30, multiplier=1.5),
     after=after_log(logger, logging.DEBUG),
     before=before_log(logger, log_level=logging.DEBUG),
     before_sleep=before_sleep_log(logger, logging.DEBUG),
     reraise=True,
-    stop=stop_after_attempt(10),
+    stop=stop_after_attempt(5),
 )
 
 
 @base_retry
 async def aget_embeddings(input, model):
-    embs = await openai.Embedding.acreate(input=input, model=model)["data"]
+    embs = (await openai.Embedding.acreate(input=input, model=model))["data"]
 
     return list(map(lambda x: x["embedding"], embs))
 
@@ -84,18 +86,21 @@ async def asummarize(
     temperature=0.2,
     presense_penalty=-1.5,
     timeout=30,
+    additional_context=None,
 ):
     messages = get_summary_context(input, max_tokens)
     logger.debug(
         f"Sending summary request to OpenAI with {count_tokens(messages, model)} tokens"
     )
-    return await openai.ChatCompletion.acreate(
-        model=model,
-        messages=messages,
-        temperature=temperature,
-        presence_penalty=presense_penalty,
-        timeout=timeout,
-        max_tokens=max_tokens * 2,
+    return (
+        await openai.ChatCompletion.acreate(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            presence_penalty=presense_penalty,
+            timeout=timeout,
+            max_tokens=max_tokens * 2,
+        )
     )["choices"][0]["message"]["content"]
 
 
@@ -108,7 +113,7 @@ def get_title(input, model, max_tokens=30):
     return (
         openai.ChatCompletion.create(
             model=model,
-            messages=get_title_context(input, max_tokens),
+            messages=messages,
             temperature=0.2,
             presence_penalty=-1.5,
             timeout=30,
@@ -118,21 +123,23 @@ def get_title(input, model, max_tokens=30):
 
 
 @base_retry
-async def aget_title(input, model, max_tokens=25):
-    messages = (get_title_context(input, max_tokens),)
+async def aget_title(input, model, max_tokens=30):
+    messages = get_title_context(input, max_tokens)
     logger.debug(
         f"Sending title request to OpenAI with {count_tokens(messages, model)} tokens"
     )
-    return (
-        await openai.ChatCompletion.acreate(
-            model=model,
-            messages=messages,
-            temperature=0.2,
-            presence_penalty=-1.5,
-            timeout=30,
-            max_tokens=max_tokens * 2,
-        )
-    )["choices"][0]["message"]["content"]
+    response = await openai.ChatCompletion.acreate(
+        model=model,
+        messages=messages,
+        temperature=0.2,
+        presence_penalty=-1.5,
+        timeout=30,
+        max_tokens=max_tokens * 2,
+    )
+
+    logger.debug(f"Got response from OpenAI: {response}")
+
+    return response["choices"][0]["message"]["content"]
 
 
 @base_retry
