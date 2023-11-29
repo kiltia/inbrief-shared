@@ -28,8 +28,8 @@ class OpenAiEmbedder(EmbeddingProvider):
     def __init__(self, model: str = "text-embedding-ada-002") -> None:
         self.model = model
 
-    def get_embeddings(self, inputs: list, **kwargs):
-        return openai_api.get_embeddings(inputs, self.model)
+    async def aget_embeddings(self, inputs: list, **kwargs):
+        return await openai_api.aget_embeddings(inputs, self.model)
 
 
 class MiniLmEmbedder(EmbeddingProvider):

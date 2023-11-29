@@ -51,7 +51,7 @@ ctx = Context()
 
 @app.post(ScraperRoutes.PARSE)
 async def parse(request: ParseRequest, response: Response):
-    logger.debug("Started serving scrapping request")
+    logger.info("Started serving scrapping request")
     entities = await parse_channels(ctx, **request.model_dump())
     # TODO(nrydanov): Need to add caching there in case all posts for required
     # time period are already stored in database (#137)
@@ -82,7 +82,7 @@ async def sync(request: SyncRequest):
 @app.on_event("startup")
 async def main() -> None:
     configure_logging()
-    logger.debug("Started loading embedders")
+    logger.info("Started loading embedders")
     init_embedders(ctx.shared_settings.components.embedders)
     openai.api_key = ctx.shared_settings.openai_api_key
     await ctx.init_db()

@@ -1,10 +1,11 @@
 import json
 import logging
+import asyncio
 from concurrent.futures._base import TimeoutError
 from datetime import datetime
 from typing import List
 
-from embedders import EmbeddingProvider, get_embedders
+from embedders import EmbeddingProvider, OpenAiEmbedder, get_embedders
 from telethon import TelegramClient
 from telethon.errors.rpcbaseerrors import BadRequestError
 from telethon.errors.rpcerrorlist import MsgIdInvalidError
@@ -71,9 +72,11 @@ def get_worker(
         # TODO(nrydanov): Move embedding retrieval out of this function
         # to enable batch processing on GPU to increase overall performance
         for emb in embedders:
-            content["embeddings"].update(
-                {emb.get_label(): emb.get_embeddings([message.message])[0]}
-            )
+            if isinstance(emb, OpenAiEmbedder):
+                embeddings = (await emb.aget_embeddings([message.message]))[0]
+            else:
+                embeddings = emb.get_embeddings([message.message])[0]
+            content["embeddings"].update({emb.get_label(): embeddings})
 
         content["embeddings"] = json.dumps(content["embeddings"])
         logger.debug(f"Ended parsing {message.id}")
@@ -104,14 +107,13 @@ async def get_content_from_channel(
         try:
             if message.date.replace(tzinfo=None) < end_date:
                 break
-            source = await get_content(message)
-            if source is not None:
-                batch.append(source)
+            batch.append(get_content(message))
         except TimeoutError:
             logging.error("Received timeout when processing chunk, skipping.")
             continue
 
-    return batch
+    batch = await asyncio.gather(*batch)
+    return list(filter(lambda x: x is not None, batch))
 
 
 async def retrieve_channels(ctx, chat_folder_link: str):
