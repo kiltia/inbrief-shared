@@ -21,7 +21,14 @@ class ComponentSettings(BaseModel):
     summarizing: List[str]
 
 
+class Configuration(BaseModel):
+    summary_batch_size: int
+    short_ops_timeout: int
+    long_ops_timeout: int
+
+
 class SharedResources(JSONSettings):
     components: ComponentSettings
     pg_creds: DatabaseCredentials
+    config: Configuration
     openai_api_key: str
