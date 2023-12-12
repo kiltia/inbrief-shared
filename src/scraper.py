@@ -1,6 +1,6 @@
+import asyncio
 import json
 import logging
-import asyncio
 from concurrent.futures._base import TimeoutError
 from datetime import datetime
 from typing import List
@@ -93,7 +93,7 @@ async def get_content_from_channel(
     offset_date=None,
     **kwargs,
 ) -> List[Source]:
-    batch: List[Source] = []
+    batch = []
     end_date = datetime.strptime(end_date, DATE_FORMAT)
     offset_date = (
         datetime.strptime(offset_date, DATE_FORMAT) if offset_date else None
@@ -133,10 +133,12 @@ async def retrieve_channels(ctx, chat_folder_link: str):
         logger.info(
             f"Warning when updating channels from link: {chat_folder_link}"
         )
-        entity = await ctx.folder_repository.get(
-            "chat_folder_link", chat_folder_link
-        )
-        ids = entity[0].channels
+        entity = (
+            await ctx.folder_repository.get(
+                "chat_folder_link", chat_folder_link
+            )
+        )[0]
+        ids = entity.channels
     return ids
 
 
