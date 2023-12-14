@@ -12,7 +12,7 @@ from config import Credentials
 from scraper import parse_channels, retrieve_channels
 from shared.db import PgRepository, create_db_string
 from shared.entities import Folder, Source
-from shared.logging import configure_logging
+from shared.logger import configure_logging
 from shared.models import ParseRequest, SyncRequest
 from shared.resources import SharedResources
 from shared.routes import ScraperRoutes
