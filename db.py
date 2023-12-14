@@ -1,5 +1,5 @@
 import logging
-from typing import List, Type
+from typing import ClassVar, List, Optional, Type
 
 from asyncpg.exceptions import UniqueViolationError
 from databases import Database
@@ -11,11 +11,14 @@ logger = logging.getLogger("app")
 
 
 class Entity(BaseModel):
+    _table_name: ClassVar[Optional[str]] = None
+    _pk: ClassVar[Optional[str]] = None
+
     pass
 
 
 class AbstractRepository:
-    def __init__(self, db: Database, entity: Type[Entity]):
+    def __init__(self, db: Database, entity: Type):
         self._db = db
         self._entity = entity
         self._table_name = entity._table_name
@@ -26,7 +29,7 @@ class AbstractRepository:
         placeholders = ",".join(map(lambda x: f":{x}", keys))
         return columns, placeholders
 
-    async def add(self, entities: List[Entity], ignore_conflict=False):
+    async def add(self, entities, ignore_conflict=False):
         if not isinstance(entities, list):
             entities = [entities]
 
@@ -45,7 +48,7 @@ class AbstractRepository:
 
         await self._db.execute_many(query=query, values=dumps)
 
-    async def update(self, entity: Entity, fields: List[str]):
+    async def update(self, entity, fields: List[str]):
         dump = entity.model_dump()
 
         pk = entity._pk
@@ -56,7 +59,7 @@ class AbstractRepository:
             query=query, values={k: dump[k] for k in fields} | {pk: dump[pk]}
         )
 
-    async def get(self, field=None, value=None) -> List[Entity]:
+    async def get(self, field=None, value=None) -> List:
         query = f"SELECT * FROM {self._table_name}"
         logger.debug(f"Executing query: {query}")
         if field is not None:

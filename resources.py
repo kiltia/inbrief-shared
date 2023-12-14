@@ -32,3 +32,6 @@ class SharedResources(JSONSettings):
     pg_creds: DatabaseCredentials
     config: Configuration
     openai_api_key: str
+
+    def __init__(self, path: str):
+        super().__init__(path)
