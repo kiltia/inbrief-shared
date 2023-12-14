@@ -7,7 +7,7 @@ from matcher import Matcher
 
 from shared.db import PgRepository, create_db_string
 from shared.entities import Story, StoryPost
-from shared.logging import configure_logging
+from shared.logger import configure_logging
 from shared.models import LinkingRequest
 from shared.resources import SharedResources
 from shared.routes import LinkerRoutes

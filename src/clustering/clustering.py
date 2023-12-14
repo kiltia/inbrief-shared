@@ -1,10 +1,10 @@
 from sklearn.cluster import (
     DBSCAN,
-    KMeans,
-    AffinityPropagation,
     OPTICS,
-    SpectralClustering,
+    AffinityPropagation,
     AgglomerativeClustering,
+    KMeans,
+    SpectralClustering,
 )
 from sklearn.metrics import silhouette_score
 
