@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 import openai
 from asgi_correlation_id import CorrelationIdMiddleware
@@ -50,7 +51,7 @@ ctx = Context()
 
 
 @app.post(ScraperRoutes.PARSE)
-async def parse(request: ParseRequest, response: Response):
+async def parse(request: ParseRequest, response: Response) -> List[Source]:
     logger.info("Started serving scrapping request")
     entities = await parse_channels(ctx, **request.model_dump())
     # TODO(nrydanov): Need to add caching there in case all posts for required
@@ -60,16 +61,7 @@ async def parse(request: ParseRequest, response: Response):
         logger.debug("Data was saved to database successfully")
     else:
         response.status_code = status.HTTP_204_NO_CONTENT
-    return [
-        {
-            "source_id": x.source_id,
-            "text": x.text,
-            "embeddings": x.embeddings,
-            "date": x.date,
-            "channel_id": x.channel_id,
-        }
-        for x in entities
-    ]
+    return entities
 
 
 @app.post(ScraperRoutes.SYNC)

@@ -38,10 +38,11 @@ def get_worker(
             "embeddings": {},
         }
         if social:
+            logger.debug(f"Started getting social content for {message.id}")
             comments = []
             try:
                 async for msg in client.iter_messages(
-                    channel_entity, reply_to=content["id"]
+                    channel_entity, reply_to=message.id
                 ):
                     text = msg.text
                     if text is not None:
@@ -50,6 +51,8 @@ def get_worker(
                 logger.warn(
                     "Got invalid message ID while parsing, skipping..."
                 )
+            except ValueError as e:
+                logger.warn(e)
             content.update({"comments": comments})
             if message.reactions is None:
                 content.update({"reactions": []})
@@ -65,10 +68,11 @@ def get_worker(
                         ]
                     }
                 )
+            logger.debug(f"Ended getting social content for {message.id}")
 
             content["reactions"] = json.dumps(content["reactions"])
 
-        logger.debug("Started generating embeddings for text")
+        logger.debug(f"Started generating embeddings for {message.id}")
         # TODO(nrydanov): Move embedding retrieval out of this function
         # to enable batch processing on GPU to increase overall performance
         for emb in embedders:
@@ -79,7 +83,8 @@ def get_worker(
             content["embeddings"].update({emb.get_label(): embeddings})
 
         content["embeddings"] = json.dumps(content["embeddings"])
-        logger.debug(f"Ended parsing {message.id}")
+        logger.debug(f"Ended generating embeddings for {message.id}")
+        logger.debug(f"Ended parsing message {message.id}")
         return Source.parse_obj(content)
 
     return get_content
@@ -111,6 +116,8 @@ async def get_content_from_channel(
         except TimeoutError:
             logging.error("Received timeout when processing chunk, skipping.")
             continue
+
+    logger.debug(f"Got {len(batch)} messages in total. Processing...")
 
     batch = await asyncio.gather(*batch)
     return list(filter(lambda x: x is not None, batch))
