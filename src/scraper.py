@@ -166,7 +166,6 @@ async def parse_channels(
         channel_entity = await client.get_entity(channel_id)
         logger.debug(f"Parsing channel: {channel_entity.id}")
         info = (await client(GetFullChannelRequest(channel_id))).full_chat
-        logger.info(info)
         channel = Channel(
             channel_id=info.id,
             title=channel_entity.title,
