@@ -32,10 +32,4 @@ class Matcher:
                 embeddings, **args
             )
 
-        stories = []
-        for i in range(len(stories_nums)):
-            story = []
-            for num in stories_nums[i]:
-                story.append(self.entities[num])
-            stories.append(story)
-        return stories, stories_nums
+        return stories_nums
