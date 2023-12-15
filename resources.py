@@ -1,6 +1,6 @@
 # NOTE(nrydanov): Probably, this file doesn't have proper name for its content
 
-from typing import List
+from typing import Dict, List
 
 from pydantic import BaseModel
 
@@ -21,10 +21,15 @@ class ComponentSettings(BaseModel):
     summarizing: List[str]
 
 
+class Ranking(BaseModel):
+    weights: Dict[str, float]
+
+
 class Configuration(BaseModel):
     summary_batch_size: int
     short_ops_timeout: int
     long_ops_timeout: int
+    ranking: Ranking
 
 
 class SharedResources(JSONSettings):

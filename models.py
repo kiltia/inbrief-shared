@@ -144,6 +144,7 @@ class LinkingRequest(BaseRequest):
     method: LinkingMethod
     embedding_source: EmbeddingSource
     config: dict
+    required_scorers: List[str] | None = None
 
 
 # Summarizer API
