@@ -8,6 +8,16 @@ class Entity(BaseModel):
     pass
 
 
+class Channel(BaseModel):
+    channel_id: int
+    title: str
+    about: str
+    subscribers: int
+
+    _table_name: ClassVar[str] = "channel"
+    _pk: ClassVar[str] = "channel_id"
+
+
 class Folder(Entity):
     chat_folder_link: str
     channels: List[int]
@@ -25,6 +35,7 @@ class Source(Entity):
     embeddings: str
     comments: list | None = None
     reactions: str | None = None
+    views: int
 
     _table_name: ClassVar[str] = "source"
     _pk: ClassVar[str] = "source_id"
