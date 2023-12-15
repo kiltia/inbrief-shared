@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from shared.entities import Source
+
 
 class JSONSettings(BaseModel):
     def __init__(self, path: str):
@@ -138,12 +140,9 @@ class SyncRequest(BaseRequest):
 
 
 class LinkingRequest(BaseRequest):
-    text: List[str]
-    embeddings: List[List[float]]
-    date: List[str]
-    source_id: List[int]
-    channel_id: List[int]
+    entities: List[Source]
     method: LinkingMethod
+    embedding_source: EmbeddingSource
     config: dict
 
 
@@ -158,7 +157,7 @@ class SummaryRequest(BaseRequest):
     density: Density
 
 
-# Editor
+# Editor API
 
 
 class EditorRequest(BaseRequest):
@@ -180,6 +179,8 @@ class SummarizeRequest(ExternalRequest):
 class FetchRequest(ExternalRequest):
     end_date: str
     offset_date: str | None = None
+    social: bool = False
+    config_id: int | None = None
 
 
 class CallbackPostRequest(BaseRequest):
