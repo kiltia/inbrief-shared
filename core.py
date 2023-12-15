@@ -27,7 +27,7 @@ logger = logging.getLogger("app")
 base_retry = retry(
     retry=retry_if_exception(openai.error.RateLimitError),
     wait=wait_exponential(min=2, max=30, multiplier=1.5),
-    after=after_log(logger, logging.DEBUG),
+    after=after_log(logger, log_level=logging.DEBUG),
     before=before_log(logger, log_level=logging.DEBUG),
     before_sleep=before_sleep_log(logger, logging.DEBUG),
     reraise=True,
