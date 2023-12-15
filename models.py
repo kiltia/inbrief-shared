@@ -66,7 +66,6 @@ class ClusteringMethod(str, Enum):
 
 @extend_enum(ClusteringMethod)
 class LinkingMethod(str, Enum):
-    BM25 = "bm25"
     NO_LINKER = "no_linker"
 
 
