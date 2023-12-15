@@ -6,13 +6,7 @@ from asgi_correlation_id import CorrelationIdMiddleware
 from databases import Database
 from fastapi import FastAPI
 from matcher import Matcher
-from ranking import (
-    CommentScorer,
-    Ranker,
-    ReactionScorer,
-    SizeScorer,
-    ViewScorer,
-)
+from ranking import Ranker, init_scorers
 
 from shared.db import PgRepository, create_db_string
 from shared.entities import Source, Story, StoryPost
@@ -31,13 +25,13 @@ logger = logging.getLogger("app")
 
 class Context:
     def __init__(self):
-        self._shared_resources = SharedResources(
+        self.shared_resources = SharedResources(
             f"{SHARED_CONFIG_PATH}/settings.json"
         )
-        self._pg = Database(create_db_string(self._shared_resources.pg_creds))
+        self._pg = Database(create_db_string(self.shared_resources.pg_creds))
         self.story_repository = PgRepository(self._pg, Story)
-
         self.story_post_repository = PgRepository(self._pg, StoryPost)
+        self.ranker = None
 
     async def init_db(self):
         await self._pg.connect()
@@ -96,8 +90,11 @@ async def get_stories(request: LinkingRequest):
     entities = stories_nums[:-1]
     entities.extend(stories_nums[-1])
 
-    ranker = Ranker([SizeScorer, ReactionScorer, CommentScorer, ViewScorer])
-    stories = ranker.get_sorted(stories)
+    weights = ctx.shared_resources.config.ranking.weights
+
+    stories = ctx.ranker.get_sorted(
+        stories, request.required_scorers, weights=weights
+    )
 
     story_ids = list(map(lambda t: uuids[t[0]], enumerate(stories)))
     return story_ids
@@ -116,5 +113,7 @@ async def dispose():
 @app.on_event("startup")
 async def main() -> None:
     configure_logging()
+    init_scorers()
+    ctx.ranker = Ranker(init_scorers())
 
     await ctx.init_db()

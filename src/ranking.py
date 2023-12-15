@@ -1,6 +1,9 @@
 import json
 import logging
 from functools import reduce
+from typing import List
+
+from rb_tocase import Case
 
 from shared.entities import Source
 
@@ -11,16 +14,23 @@ class AbstractScorer:
     def get_metrics(self, scores):
         return list(map(self.key, scores))
 
-    def change_scores(self, scores):
+    def change_scores(self, scores, boost=1):
         metrics = self.get_metrics(scores)
         max_score = max(metrics)
 
         return list(
             map(
-                lambda pair: (pair[0] * pair[1][0] / max_score, pair[1][1]),
+                lambda pair: (
+                    (pair[0] / max_score) * boost + pair[1][0],
+                    pair[1][1],
+                ),
                 zip(metrics, scores, strict=True),
             )
         )
+
+    @classmethod
+    def get_label(self):
+        return Case.to_snake(self.__name__)
 
 
 class SizeScorer(AbstractScorer):
@@ -68,18 +78,40 @@ class ViewScorer(AbstractScorer):
 
 class Ranker:
     def __init__(self, scorers):
-        self.scorers = list(map(lambda x: x(), scorers))
+        self.scorers = scorers
 
-    def get_sorted(self, stories, return_scores=False):
+    def _get_scorers(self, required_scorers=None):
+        if not required_scorers:
+            return self.scorers
+        return list(
+            filter(lambda x: x.get_label() in required_scorers), self.scorers
+        )
+
+    def get_sorted(
+        self,
+        stories,
+        required_scorers: List[str],
+        weights,
+        return_scores=False,
+    ):
         current_scores = list(map(lambda x: (1.0, x), stories))
-        for scorer in self.scorers:
-            current_scores = scorer.change_scores(current_scores)
+        scorers = self._get_scorers(required_scorers)
+        for scorer in scorers:
+            current_scores = scorer.change_scores(
+                current_scores, boost=weights[scorer.get_label()]
+            )
 
         sorted_scores = sorted(
             current_scores, key=lambda x: x[0], reverse=True
         )
 
-        if return_scores:
+        print(list(map(lambda x: x[0], list(sorted_scores))))
+
+        if not return_scores:
             sorted_scores = map(lambda x: x[1], sorted_scores)
 
         return list(sorted_scores)
+
+
+def init_scorers():
+    return [scorer() for scorer in AbstractScorer.__subclasses__()]
