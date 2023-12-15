@@ -58,6 +58,14 @@ class CommentScorer(AbstractScorer):
         return reduce(lambda acc, y: acc + len(y[1].comments), story_entry, 0)
 
 
+class ViewScorer(AbstractScorer):
+    def __init__(self):
+        self.key = lambda x: self._get_story_score(x[1])
+
+    def _get_story_score(self, story_entry):
+        return reduce(lambda acc, y: acc + y[1].views, story_entry, 0)
+
+
 class Ranker:
     def __init__(self, scorers):
         self.scorers = list(map(lambda x: x(), scorers))

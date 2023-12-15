@@ -6,7 +6,13 @@ from asgi_correlation_id import CorrelationIdMiddleware
 from databases import Database
 from fastapi import FastAPI
 from matcher import Matcher
-from ranking import CommentScorer, Ranker, ReactionScorer, SizeScorer
+from ranking import (
+    CommentScorer,
+    Ranker,
+    ReactionScorer,
+    SizeScorer,
+    ViewScorer,
+)
 
 from shared.db import PgRepository, create_db_string
 from shared.entities import Source, Story, StoryPost
@@ -90,7 +96,7 @@ async def get_stories(request: LinkingRequest):
     entities = stories_nums[:-1]
     entities.extend(stories_nums[-1])
 
-    ranker = Ranker([SizeScorer, ReactionScorer, CommentScorer])
+    ranker = Ranker([SizeScorer, ReactionScorer, CommentScorer, ViewScorer])
     stories = ranker.get_sorted(stories)
 
     story_ids = list(map(lambda t: uuids[t[0]], enumerate(stories)))
