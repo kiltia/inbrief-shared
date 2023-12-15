@@ -39,7 +39,7 @@ ctx = Context()
 
 @app.post(LinkerRoutes.GET_STORIES)
 async def get_stories(request: LinkingRequest):
-    matcher = Matcher(request.text, request.embeddings, request.date)
+    matcher = Matcher(request.entities, request.embedding_source)
     stories, stories_nums = matcher.get_stories(
         request.method, **request.config
     )
@@ -57,8 +57,8 @@ async def get_stories(request: LinkingRequest):
         for j in range(len(stories_nums[i])):
             story = StoryPost(
                 story_id=uuids[uuid_num],
-                source_id=request.source_id[stories_nums[i][j]],
-                channel_id=request.channel_id[stories_nums[i][j]],
+                source_id=request.entities[stories_nums[i][j]].source_id,
+                channel_id=request.entities[stories_nums[i][j]].channel_id,
             )
             stories.append(story)
         uuid_num += 1
@@ -67,8 +67,8 @@ async def get_stories(request: LinkingRequest):
     for i in range(len(stories_nums[-1])):
         story = StoryPost(
             story_id=uuids[uuid_num],
-            source_id=request.source_id[stories_nums[-1][i]],
-            channel_id=request.channel_id[stories_nums[-1][i]],
+            source_id=request.entities[stories_nums[-1][i]].source_id,
+            channel_id=request.entities[stories_nums[-1][i]].channel_id,
         )
         stories.append(story)
         uuid_num += 1
