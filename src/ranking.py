@@ -7,24 +7,31 @@ from shared.entities import Source
 logger = logging.getLogger("app")
 
 
-class Scorer:
-    pass
+class AbstractScorer:
+    def get_metrics(self, scores):
+        return list(map(self.key, scores))
 
-
-class SizeScorer(Scorer):
     def change_scores(self, scores):
-        sizes = list(map(lambda x: len(x[1]), scores))
-        max_size = max(sizes)
+        metrics = self.get_metrics(scores)
+        max_score = max(metrics)
 
         return list(
             map(
-                lambda pair: (pair[0] * pair[1][0] / max_size, pair[1][1]),
-                zip(sizes, scores, strict=True),
+                lambda pair: (pair[0] * pair[1][0] / max_score, pair[1][1]),
+                zip(metrics, scores, strict=True),
             )
         )
 
 
-class ReactionScorer(Scorer):
+class SizeScorer(AbstractScorer):
+    def __init__(self):
+        self.key = lambda x: len(x[1])
+
+
+class ReactionScorer(AbstractScorer):
+    def __init__(self):
+        self.key = lambda x: self._get_story_score(x[1])
+
     def _get_reactions(self, entity: Source):
         if entity.reactions is None:
             return 0
@@ -42,20 +49,13 @@ class ReactionScorer(Scorer):
             lambda acc, y: acc + self._get_reactions(y[1]), story_entry, 0
         )
 
-    def change_scores(self, scores):
-        counts = list(map(lambda x: self._get_story_score(x[1]), scores))
 
-        max_count = max(counts)
+class CommentScorer(AbstractScorer):
+    def __init__(self):
+        self.key = lambda x: self._get_story_score(x[1])
 
-        return list(
-            map(
-                lambda pair: (
-                    (1 + pair[0]) * pair[1][0] / (1 + max_count),
-                    pair[1][1],
-                ),
-                zip(counts, scores, strict=True),
-            )
-        )
+    def _get_story_score(self, story_entry):
+        return reduce(lambda acc, y: acc + len(y[1].comments), story_entry, 0)
 
 
 class Ranker:
