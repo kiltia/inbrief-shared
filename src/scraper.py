@@ -9,9 +9,10 @@ from embedders import EmbeddingProvider, OpenAiEmbedder, get_embedders
 from telethon import TelegramClient
 from telethon.errors.rpcbaseerrors import BadRequestError
 from telethon.errors.rpcerrorlist import MsgIdInvalidError
+from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.functions.chatlists import CheckChatlistInviteRequest
 
-from shared.entities import Folder, Source
+from shared.entities import Channel, Folder, Source
 from shared.utils import DATE_FORMAT
 
 logger = logging.getLogger("app")
@@ -36,6 +37,7 @@ def get_worker(
             "reference": f"t.me/{channel_entity.username}/{message.id}",
             "channel_id": channel_entity.id,
             "embeddings": {},
+            "views": message.views,
         }
         if social:
             logger.debug(f"Started getting social content for {message.id}")
@@ -163,6 +165,17 @@ async def parse_channels(
     for channel_id in channels:
         channel_entity = await client.get_entity(channel_id)
         logger.debug(f"Parsing channel: {channel_entity.id}")
+        info = (await client(GetFullChannelRequest(channel_id))).full_chat
+        logger.info(info)
+        channel = Channel(
+            channel_id=info.id,
+            title=channel_entity.title,
+            about=info.about,
+            subscribers=info.participants_count,
+        )
+        await ctx.channel_repository.add_or_update(
+            channel, fields=["title", "about", "subscribers"]
+        )
         response = await get_content_from_channel(
             channel_entity, client, embedders, **parse_args
         )

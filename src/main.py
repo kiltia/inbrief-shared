@@ -12,7 +12,7 @@ from utils import SESSION_PATH
 from config import Credentials
 from scraper import parse_channels, retrieve_channels
 from shared.db import PgRepository, create_db_string
-from shared.entities import Folder, Source
+from shared.entities import Channel, Folder, Source
 from shared.logger import configure_logging
 from shared.models import ParseRequest, SyncRequest
 from shared.resources import SharedResources
@@ -39,6 +39,7 @@ class Context:
         self.pg = Database(create_db_string(self.shared_settings.pg_creds))
         self.folder_repository = PgRepository(self.pg, Folder)
         self.source_repository = PgRepository(self.pg, Source)
+        self.channel_repository = PgRepository(self.pg, Channel)
 
     async def init_db(self):
         await self.pg.connect()
