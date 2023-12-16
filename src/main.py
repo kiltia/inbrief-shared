@@ -113,7 +113,6 @@ async def dispose():
 @app.on_event("startup")
 async def main() -> None:
     configure_logging()
-    init_scorers()
     ctx.ranker = Ranker(init_scorers())
 
     await ctx.init_db()
