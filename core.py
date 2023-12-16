@@ -47,7 +47,7 @@ async def aget_embeddings(input, model):
 async def asummarize(
     input,
     model,
-    max_words=100,
+    max_words=200,
     timeout=30,
     additional_context=None,
 ):
@@ -66,7 +66,7 @@ async def asummarize(
 
 # NOTE(nrydanov): This method makes paid request to OpenAI
 @base_retry
-async def aget_title(input, model, max_words=10):
+async def aget_title(input, model, max_words=7):
     messages = get_title_context(input, max_words)
     logger.debug(
         f"Sending title request to OpenAI with {count_tokens(messages, model)} tokens"
