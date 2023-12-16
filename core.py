@@ -42,7 +42,7 @@ async def aget_embeddings(input, model):
     return list(map(lambda x: x["embedding"], embs))
 
 
-# Outdated, need to make it equal to synchronous version when needed
+# NOTE(nrydanov): This method makes paid request to OpenAI
 @base_retry
 async def asummarize(
     input,
@@ -64,6 +64,7 @@ async def asummarize(
     )["choices"][0]["message"]["content"]
 
 
+# NOTE(nrydanov): This method makes paid request to OpenAI
 @base_retry
 async def aget_title(input, model, max_words=10):
     messages = get_title_context(input, max_words)
@@ -81,6 +82,7 @@ async def aget_title(input, model, max_words=10):
     return response["choices"][0]["message"]["content"]
 
 
+# NOTE(nrydanov): This method makes paid request to OpenAI
 @base_retry
 async def aedit(
     input,
@@ -143,7 +145,7 @@ def classify_attempt(attempt, categories, max_retries, **kwargs):
 
 
 # TODO(nrydanov): Move stop_after_attempt to configuration file
-# NOTE(nrydanov): This method make paid request to OpenAI
+# NOTE(nrydanov): This method makes paid request to OpenAI
 @retry(
     wait=wait_exponential(min=2, max=60, multiplier=2),
     after=after_log(logger, logging.INFO),
