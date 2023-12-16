@@ -97,29 +97,22 @@ class Ranker:
         current_scores = list(map(lambda x: (0.0, x), stories))
         scorers = self._get_scorers(required_scorers)
         for scorer in scorers:
-            logger.debug(f"{scorer.get_label()} is working...")
             current_scores = scorer.change_scores(
                 current_scores, boost=weights[scorer.get_label()]
             )
 
-            sorted_scores = sorted(
-                current_scores, key=lambda x: x[0], reverse=True
-            )
-
-            printable_scores = list(
-                map(
-                    lambda x: (x[0], x[1][0]),
-                    sorted_scores,
-                )
-            )
-
-            logger.debug(
-                f"Scores after {scorer.get_label()}: {printable_scores}"
-            )
         sorted_scores = sorted(
             current_scores, key=lambda x: x[0], reverse=True
         )
 
+        printable_scores = list(
+            map(
+                lambda x: (x[0], x[1][0]),
+                sorted_scores,
+            )
+        )
+
+        logger.debug(f"Ranking results: {printable_scores}")
         if not return_scores:
             sorted_scores = list(map(lambda x: x[1], sorted_scores))
 
