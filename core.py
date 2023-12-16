@@ -42,53 +42,16 @@ async def aget_embeddings(input, model):
     return list(map(lambda x: x["embedding"], embs))
 
 
-@base_retry
-def get_embeddings(input, model):
-    embs = openai.Embedding.create(input=input, model=model)["data"]
-
-    return list(map(lambda x: x["embedding"], embs))
-
-
-@base_retry
-def summarize(
-    input,
-    model,
-    max_tokens=400,
-    temperature=0.1,
-    presense_penalty=0,
-    timeout=30,
-    additional_context=None,
-):
-    messages = get_summary_context(input, max_tokens)
-    if additional_context is not None:
-        messages.append({"role": "system", "content": additional_context})
-    logger.debug(
-        f"Sending summary request to OpenAI with {count_tokens(messages, model)} tokens"
-    )
-    return (
-        openai.ChatCompletion.create(
-            model=model,
-            messages=messages,
-            temperature=temperature,
-            presence_penalty=presense_penalty,
-            timeout=timeout,
-            max_tokens=max_tokens * 2,
-        )
-    )["choices"][0]["message"]["content"]
-
-
 # Outdated, need to make it equal to synchronous version when needed
 @base_retry
 async def asummarize(
     input,
     model,
-    max_tokens=300,
-    temperature=0.2,
-    presense_penalty=-1.5,
+    max_words=100,
     timeout=30,
     additional_context=None,
 ):
-    messages = get_summary_context(input, max_tokens)
+    messages = get_summary_context(input, max_words)
     logger.debug(
         f"Sending summary request to OpenAI with {count_tokens(messages, model)} tokens"
     )
@@ -96,45 +59,21 @@ async def asummarize(
         await openai.ChatCompletion.acreate(
             model=model,
             messages=messages,
-            temperature=temperature,
-            presence_penalty=presense_penalty,
             timeout=timeout,
-            max_tokens=max_tokens * 2,
         )
     )["choices"][0]["message"]["content"]
 
 
 @base_retry
-def get_title(input, model, max_tokens=30):
-    messages = get_title_context(input, max_tokens)
-    logger.debug(
-        f"Sending title request to OpenAI with {count_tokens(messages, model)} tokens"
-    )
-    return (
-        openai.ChatCompletion.create(
-            model=model,
-            messages=messages,
-            temperature=0.2,
-            presence_penalty=-1.5,
-            timeout=30,
-            max_tokens=max_tokens * 2,
-        )
-    )["choices"][0]["message"]["content"]
-
-
-@base_retry
-async def aget_title(input, model, max_tokens=30):
-    messages = get_title_context(input, max_tokens)
+async def aget_title(input, model, max_words=10):
+    messages = get_title_context(input, max_words)
     logger.debug(
         f"Sending title request to OpenAI with {count_tokens(messages, model)} tokens"
     )
     response = await openai.ChatCompletion.acreate(
         model=model,
         messages=messages,
-        temperature=0.2,
-        presence_penalty=-1.5,
         timeout=30,
-        max_tokens=max_tokens * 2,
     )
 
     logger.debug(f"Got response from OpenAI: {response}")
@@ -143,42 +82,14 @@ async def aget_title(input, model, max_tokens=30):
 
 
 @base_retry
-def edit(
-    input,
-    model,
-    style,
-    max_tokens=800,
-    temperature=0.2,
-    presense_penalty=-1.5,
-    timeout=30,
-):
-    messages = get_editor_context(input, max_tokens, style)
-    logger.debug(
-        f"Sending edit request to OpenAI with {count_tokens(messages, model)} tokens"
-    )
-    return (
-        openai.ChatCompletion.create(
-            model=model,
-            messages=get_editor_context(input, max_tokens, style),
-            temperature=temperature,
-            presence_penalty=presense_penalty,
-            timeout=timeout,
-            max_tokens=max_tokens,
-        )
-    )["choices"][0]["message"]["content"]
-
-
-@base_retry
 async def aedit(
     input,
     model,
     style,
-    max_tokens=400,
-    temperature=0.2,
-    presense_penalty=-1.5,
+    max_words=100,
     timeout=30,
 ):
-    messages = get_editor_context(input, max_tokens, style)
+    messages = get_editor_context(input, max_words, style)
     logger.debug(
         f"Sending edit request to OpenAI with {count_tokens(messages, model)} tokens"
     )
@@ -186,10 +97,7 @@ async def aedit(
         await openai.ChatCompletion.acreate(
             model=model,
             messages=messages,
-            temperature=temperature,
-            presence_penalty=presense_penalty,
             timeout=timeout,
-            max_tokens=max_tokens,
         )
     )["choices"][0]["message"]["content"]
 
@@ -255,8 +163,6 @@ def classify(text, categories, model, max_retries):
             {"role": "system", "content": CLASSIFY_TASK + "\n" + class_list},
             {"role": "user", "content": text},
         ],
-        temperature=0.2,
-        presence_penalty=-1.5,
         timeout=30,
         max_tokens=int(max_tokens),
         max_retries=max_retries,
