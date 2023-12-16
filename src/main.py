@@ -56,10 +56,10 @@ async def get_stories(request: LinkingRequest):
     await ctx.story_repository.add(stories_uuids)
 
     entities = []
-    stories: List[List[tuple[UUID, Source]]] = []
+    stories: List[tuple[UUID, List[Source]]] = []
     uuid_num = 0
     for i in range(len(stories_nums[:-1])):
-        stories.append([])
+        stories.append((uuids[uuid_num], []))
         for j in range(len(stories_nums[i])):
             source = request.entities[stories_nums[i][j]]
             entity = StoryPost(
@@ -68,13 +68,13 @@ async def get_stories(request: LinkingRequest):
                 channel_id=source.channel_id,
             )
             entities.append(entity)
-            stories[i].append((uuids[uuid_num], source))
+            stories[i][1].append(source)
 
         uuid_num += 1
     # NOTE(sokunkov): We need to finally decide what we want to do
     # with the noisy cluster
-    stories.append([])
     for i in range(len(stories_nums[-1])):
+        stories.append((uuids[uuid_num], []))
         source = request.entities[stories_nums[-1][i]]
         entity = StoryPost(
             story_id=uuids[uuid_num],
@@ -82,7 +82,7 @@ async def get_stories(request: LinkingRequest):
             channel_id=request.entities[stories_nums[-1][i]].channel_id,
         )
         entities.append(entity)
-        stories[-1].append((uuids[uuid_num], source))
+        stories[-1][1].append(source)
         uuid_num += 1
 
     await ctx.story_post_repository.add(entities)
@@ -96,7 +96,7 @@ async def get_stories(request: LinkingRequest):
         stories, request.required_scorers, weights=weights
     )
 
-    story_ids = list(map(lambda t: uuids[t[0]], enumerate(stories)))
+    story_ids = list(map(lambda t: t[0], stories))
     return story_ids
 
 

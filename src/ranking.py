@@ -35,12 +35,12 @@ class AbstractScorer:
 
 class SizeScorer(AbstractScorer):
     def __init__(self):
-        self.key = lambda x: len(x[1])
+        self.key = lambda x: len(x[1][1])
 
 
 class ReactionScorer(AbstractScorer):
     def __init__(self):
-        self.key = lambda x: self._get_story_score(x[1])
+        self.key = lambda x: self._get_story_score(x[1][1])
 
     def _get_reactions(self, entity: Source):
         if entity.reactions is None:
@@ -56,24 +56,24 @@ class ReactionScorer(AbstractScorer):
 
     def _get_story_score(self, story_entry):
         return reduce(
-            lambda acc, y: acc + self._get_reactions(y[1]), story_entry, 0
+            lambda acc, y: acc + self._get_reactions(y), story_entry, 0
         )
 
 
 class CommentScorer(AbstractScorer):
     def __init__(self):
-        self.key = lambda x: self._get_story_score(x[1])
+        self.key = lambda x: self._get_story_score(x[1][1])
 
     def _get_story_score(self, story_entry):
-        return reduce(lambda acc, y: acc + len(y[1].comments), story_entry, 0)
+        return reduce(lambda acc, y: acc + len(y.comments), story_entry, 0)
 
 
 class ViewScorer(AbstractScorer):
     def __init__(self):
-        self.key = lambda x: self._get_story_score(x[1])
+        self.key = lambda x: self._get_story_score(x[1][1])
 
     def _get_story_score(self, story_entry):
-        return reduce(lambda acc, y: acc + y[1].views, story_entry, 0)
+        return reduce(lambda acc, y: acc + y.views, story_entry, 0)
 
 
 class Ranker:
@@ -94,23 +94,36 @@ class Ranker:
         weights,
         return_scores=False,
     ):
-        current_scores = list(map(lambda x: (1.0, x), stories))
+        current_scores = list(map(lambda x: (0.0, x), stories))
         scorers = self._get_scorers(required_scorers)
         for scorer in scorers:
+            logger.debug(f"{scorer.get_label()} is working...")
             current_scores = scorer.change_scores(
                 current_scores, boost=weights[scorer.get_label()]
             )
 
+            sorted_scores = sorted(
+                current_scores, key=lambda x: x[0], reverse=True
+            )
+
+            printable_scores = list(
+                map(
+                    lambda x: (x[0], x[1][0]),
+                    sorted_scores,
+                )
+            )
+
+            logger.debug(
+                f"Scores after {scorer.get_label()}: {printable_scores}"
+            )
         sorted_scores = sorted(
             current_scores, key=lambda x: x[0], reverse=True
         )
 
-        print(list(map(lambda x: x[0], list(sorted_scores))))
-
         if not return_scores:
-            sorted_scores = map(lambda x: x[1], sorted_scores)
+            sorted_scores = list(map(lambda x: x[1], sorted_scores))
 
-        return list(sorted_scores)
+        return sorted_scores
 
 
 def init_scorers():
