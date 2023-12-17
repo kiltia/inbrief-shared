@@ -26,7 +26,7 @@ class Ranking(BaseModel):
 
 
 class Configuration(BaseModel):
-    summary_batch_size: int
+    summarize_thread_pool: int
     short_ops_timeout: int
     long_ops_timeout: int
     ranking: Ranking
