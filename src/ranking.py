@@ -18,6 +18,9 @@ class AbstractScorer:
         metrics = self.get_metrics(scores)
         max_score = max(metrics)
 
+        if max_score == 0:
+            max_score = 1
+
         return list(
             map(
                 lambda pair: (
