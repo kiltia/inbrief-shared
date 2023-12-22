@@ -7,7 +7,7 @@ from tenacity import (
     before_log,
     before_sleep_log,
     retry,
-    retry_if_exception,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
 )
@@ -25,7 +25,7 @@ logger = logging.getLogger("app")
 
 
 base_retry = retry(
-    retry=retry_if_exception(openai.error.RateLimitError),
+    retry=retry_if_exception_type(openai.error.RateLimitError),
     wait=wait_exponential(min=2, max=30, multiplier=1.5),
     after=after_log(logger, log_level=logging.DEBUG),
     before=before_log(logger, log_level=logging.DEBUG),
