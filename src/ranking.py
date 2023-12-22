@@ -71,7 +71,9 @@ class CommentScorer(AbstractScorer):
         return len(entity.comments) if entity.comments else 0
 
     def _get_story_score(self, story_entry):
-        return reduce(lambda acc, y: acc + len(y.comments), story_entry, 0)
+        return reduce(
+            lambda acc, y: acc + self._get_comments(y), story_entry, 0
+        )
 
 
 class ViewScorer(AbstractScorer):
