@@ -3,6 +3,7 @@
 from typing import Dict, List
 
 from pydantic import BaseModel
+from pydantic_settings import BaseSettings
 
 from shared.models import JSONSettings
 
@@ -39,3 +40,7 @@ class SharedResources(JSONSettings):
 
     def __init__(self, path: str):
         super().__init__(path)
+
+
+class EnvironmentSettings(BaseSettings):
+    pass
