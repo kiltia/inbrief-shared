@@ -67,6 +67,9 @@ class CommentScorer(AbstractScorer):
     def __init__(self):
         self.key = lambda x: self._get_story_score(x[1][1])
 
+    def _get_comments(self, entity: Source):
+        return len(entity.comments) if entity.comments else 0
+
     def _get_story_score(self, story_entry):
         return reduce(lambda acc, y: acc + len(y.comments), story_entry, 0)
 
