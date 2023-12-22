@@ -7,14 +7,5 @@ class Credentials(BaseSettings):
     api_id: str
 
     class Config:
-        env_file = "./config/.env"
-        env_file_encoding = "utf-8"
-
-
-class Settings(BaseSettings):
-    classify_model: str = "gpt-3.5-turbo"
-    max_retries: int = 1
-
-    class Config:
-        env_file = "config/parser.cfg"
+        env_file = ".env"
         env_file_encoding = "utf-8"

@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import List
 
 import openai
@@ -77,7 +78,7 @@ async def main() -> None:
     configure_logging()
     logger.info("Started loading embedders")
     init_embedders(ctx.shared_settings.components.embedders)
-    openai.api_key = ctx.shared_settings.openai_api_key
+    openai.api_key = os.getenv("OPENAI_API_KEY")
     await ctx.init_db()
     await ctx.client.start()
 
