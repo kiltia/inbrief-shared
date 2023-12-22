@@ -33,6 +33,7 @@ class Context:
             f"{SESSION_PATH}/{self.creds.session}",
             self.creds.api_id,
             self.creds.api_hash,
+            system_version="4.16.30-vxCUSTOM",
         )
         self.shared_settings = SharedResources(
             f"{SHARED_CONFIG_PATH}/settings.json"
