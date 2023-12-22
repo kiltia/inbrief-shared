@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from typing import List
 from uuid import UUID, uuid4
 
@@ -14,7 +15,7 @@ from shared.logger import configure_logging
 from shared.models import LinkingRequest
 from shared.resources import SharedResources
 from shared.routes import LinkerRoutes
-from shared.utils import SHARED_CONFIG_PATH
+from shared.utils import DB_DATE_FORMAT, SHARED_CONFIG_PATH
 
 app = FastAPI()
 app.add_middleware(CorrelationIdMiddleware, validator=None)
@@ -91,6 +92,19 @@ async def get_stories(request: LinkingRequest):
     entities.extend(stories_nums[-1])
 
     weights = ctx.shared_resources.config.ranking.weights
+
+    stories = list(
+        map(
+            lambda t: (
+                t[0],
+                sorted(
+                    t[1],
+                    key=lambda x: datetime.strptime(x.date, DB_DATE_FORMAT),
+                ),
+            ),
+            stories,
+        )
+    )
 
     stories = ctx.ranker.get_sorted(
         stories, request.required_scorers, weights=weights
