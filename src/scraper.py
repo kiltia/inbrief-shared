@@ -13,7 +13,7 @@ from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.functions.chatlists import CheckChatlistInviteRequest
 
 from shared.entities import Channel, Folder, Source
-from shared.utils import DATE_FORMAT
+from shared.utils import DATE_FORMAT, DB_DATE_FORMAT
 
 logger = logging.getLogger("app")
 
@@ -33,7 +33,7 @@ def get_worker(
         content = {
             "source_id": message.id,
             "text": message.message,
-            "date": message.date.strftime(DATE_FORMAT),
+            "date": message.date.strftime(DB_DATE_FORMAT),
             "reference": f"t.me/{channel_entity.username}/{message.id}",
             "channel_id": channel_entity.id,
             "embeddings": {},
