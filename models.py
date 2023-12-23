@@ -86,6 +86,7 @@ class SummaryMethod(str, Enum):
 
 
 class Density(str, Enum):
+    TITLE = "title"
     SMALL = "small"
     LARGE = "large"
 
@@ -149,21 +150,20 @@ class LinkingRequest(BaseRequest):
 # Summarizer API
 
 
+class EditorConfig(BaseModel):
+    style: str
+    model: OpenAIModels
+
+
+class SummaryConfig(BaseModel):
+    summary_model: OpenAIModels
+    editor_config: EditorConfig | None = None
+
+
 class SummaryRequest(BaseRequest):
-    summary_id: UUID
-    story_id: UUID
-    config_id: int
-    chat_id: int
-    density: Density
-
-
-# Editor API
-
-
-class EditorRequest(BaseRequest):
-    summary_id: UUID
-    model: str = "gpt-4-1106-preview"
-    style: str = "влиятельный политик"
+    story: list[str]
+    summary_method: SummaryMethod
+    config: SummaryConfig
     density: Density
 
 
