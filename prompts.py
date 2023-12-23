@@ -13,31 +13,31 @@ EDITOR_TASK = "Представь, что ты редактор телеграм
 def get_summary_context(text, max_words):
     return [
         {"role": "system", "content": SUMMARIZE_TASK},
+        {"role": "user", "content": text},
         {
             "role": "system",
             "content": f"Необходимо использовать строго не более {max_words} слов.",
         },
-        {"role": "user", "content": text},
     ]
 
 
 def get_title_context(text, max_words):
     return [
         {"role": "system", "content": TITLE_TASK},
+        {"role": "user", "content": text},
         {
             "role": "system",
             "content": "Необходимо использовать строго не более {max_words} слов.",
         },
-        {"role": "user", "content": text},
     ]
 
 
 def get_editor_context(text, max_words, style):
     return [
         {"role": "system", "content": EDITOR_TASK},
+        {"role": "user", "content": text},
         {
             "role": "system",
             "content": f"Дополнительные условия: необходимо использовать строго не более {max_words} слов. Придерживайся следующего стиля текста: {style}",
         },
-        {"role": "user", "content": text},
     ]
