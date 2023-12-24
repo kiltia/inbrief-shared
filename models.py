@@ -40,11 +40,6 @@ class PresetData(BaseModel):
         return list(cls.model_fields.keys())
 
 
-class SummaryType(str, Enum):
-    STORYLINES = "storylines"
-    SINGLE_NEWS = "single_news"
-
-
 class EmbeddingSource(str, Enum):
     FTMLM = "ft+mlm"
     OPENAI = "openai"
