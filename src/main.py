@@ -15,7 +15,7 @@ from scraper import parse_channels, retrieve_channels
 from shared.db import PgRepository, create_db_string
 from shared.entities import Channel, Folder, Source
 from shared.logger import configure_logging
-from shared.models import ParseRequest, SyncRequest
+from shared.models import ParseRequest
 from shared.resources import SharedResources
 from shared.routes import ScraperRoutes
 from shared.utils import SHARED_CONFIG_PATH
@@ -67,10 +67,10 @@ async def parse(request: ParseRequest, response: Response) -> List[Source]:
     return entities
 
 
-@app.post(ScraperRoutes.SYNC)
-async def sync(request: SyncRequest):
-    logger.debug("Started serving fetch request")
-    response = await retrieve_channels(ctx, request.chat_folder_link)
+@app.get(ScraperRoutes.SYNC)
+async def sync(link: str):
+    logger.debug("Started serving sync request")
+    response = await retrieve_channels(ctx, link)
     return response
 
 
