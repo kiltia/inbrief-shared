@@ -33,6 +33,7 @@ class Source(Entity):
     channel_id: int
     reference: str
     embeddings: str
+    label: str | None = None
     comments: list | None = None
     reactions: str | None = None
     views: int

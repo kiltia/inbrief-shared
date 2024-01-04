@@ -19,6 +19,7 @@ class DatabaseCredentials(BaseModel):
 
 class ComponentSettings(BaseModel):
     embedders: List[str]
+    classifier: str | None
     summarizing: List[str]
 
 
