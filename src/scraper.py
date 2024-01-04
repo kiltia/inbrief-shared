@@ -22,6 +22,7 @@ def get_worker(
     channel_entity,
     client: TelegramClient,
     embedders: List[EmbeddingProvider],
+    classifier,
     social: bool,
     **kwargs,
 ):
@@ -86,6 +87,16 @@ def get_worker(
 
         content["embeddings"] = json.dumps(content["embeddings"])
         logger.debug(f"Ended generating embeddings for {message.id}")
+
+        logger.debug(f"Started classification {message.id}")
+        content.update(
+            {
+                "label": None
+                if classifier is None
+                else classifier.get_labels([message.message])[0]
+            }
+        )
+        logger.debug(f"Ended classification {message.id}")
         logger.debug(f"Ended parsing message {message.id}")
         return Source.parse_obj(content)
 
@@ -96,6 +107,7 @@ async def get_content_from_channel(
     channel_entity,
     client: TelegramClient,
     embedders: List[EmbeddingProvider],
+    classifier,
     end_date,
     offset_date=None,
     **kwargs,
@@ -109,7 +121,9 @@ async def get_content_from_channel(
     api_iterator = client.iter_messages(
         channel_entity, offset_date=offset_date
     )
-    get_content = get_worker(channel_entity, client, embedders, **kwargs)
+    get_content = get_worker(
+        channel_entity, client, embedders, classifier, **kwargs
+    )
     async for message in api_iterator:
         try:
             if message.date.replace(tzinfo=None) < end_date:
@@ -161,6 +175,7 @@ async def parse_channels(
 
     client = ctx.client
     embedders = get_embedders(required_embedders)
+    classifier = ctx.classifier
     result: List[Source] = []
     for channel_id in channels:
         channel_entity = await client.get_entity(channel_id)
@@ -176,7 +191,7 @@ async def parse_channels(
             channel, fields=["title", "about", "subscribers"]
         )
         response = await get_content_from_channel(
-            channel_entity, client, embedders, **parse_args
+            channel_entity, client, embedders, classifier, **parse_args
         )
         result = result + response
 

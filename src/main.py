@@ -9,6 +9,7 @@ from embedders import init_embedders
 from fastapi import FastAPI, Response, status
 from telethon import TelegramClient
 from utils import SESSION_PATH
+from classifiers import get_classifier
 
 from config import Credentials
 from scraper import parse_channels, retrieve_channels
@@ -37,6 +38,9 @@ class Context:
         )
         self.shared_settings = SharedResources(
             f"{SHARED_CONFIG_PATH}/settings.json"
+        )
+        self.classifier = get_classifier(
+            self.shared_settings.components.classifier
         )
         self.pg = Database(create_db_string(self.shared_settings.pg_creds))
         self.folder_repository = PgRepository(self.pg, Folder)
