@@ -46,8 +46,15 @@ ctx = Context()
 
 @app.post(LinkerRoutes.GET_STORIES)
 async def get_stories(request: LinkingRequest):
-    matcher = Matcher(request.entities, request.embedding_source)
-    stories_nums = matcher.get_stories(request.method, **request.config)
+    matcher = Matcher(
+        request.entities,
+        request.embedding_source,
+        request.scorer,
+        request.metric,
+    )
+    stories_nums = matcher.get_stories(
+        method_name=request.method, **request.config
+    )
 
     uuids = [
         uuid4() for _ in range(len(stories_nums) + len(stories_nums[-1]) - 1)
