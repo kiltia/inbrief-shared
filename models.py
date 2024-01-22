@@ -134,10 +134,23 @@ class SyncRequest(BaseRequest):
 # Linker API
 
 
+class LinkingScorers(str, Enum):
+    SILHOUETTE = "silhouette"
+
+
+class DistancesMetrics(str, Enum):
+    CITYBLOCK = "cityblock"
+    COSINE = "cosine"
+    EUCLIDEAN = "euclidean"
+    HAVERSINE = "haversine"
+
+
 class LinkingRequest(BaseRequest):
     entities: List[Source]
     method: LinkingMethod
     embedding_source: EmbeddingSource
+    scorer: LinkingScorers
+    metric: DistancesMetrics
     config: dict
     required_scorers: List[str] | None = None
 
