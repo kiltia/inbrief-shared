@@ -2,7 +2,7 @@ import json
 import metrics
 
 from clustering import get_clustering_method
-from shared.models import ClusteringMethod, EmbeddingSource
+from shared.models import EmbeddingSource
 
 from sklearn.decomposition import PCA
 
@@ -40,13 +40,13 @@ class Matcher:
             case EmbeddingSource.MLM:
                 embeddings = embs["mini-lm-embedder"]
 
-        if n_components is not None:
+        if n_components is not None and n_components < len(embeddings):
             embeddings = PCA(n_components).fit_transform(embeddings)
 
         method = get_clustering_method(method_name.value)(immutable_config)
         best_config = method.fine_tune(
             embeddings, self.scorer, self.metric, params_range, sort=True
-        )[0]
+        )[0][1]
         stories_nums = method.fit(embeddings, best_config)
 
         return stories_nums

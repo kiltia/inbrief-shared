@@ -1,5 +1,5 @@
 import hdbscan
-import sklearn
+import sklearn.cluster as cls
 import numpy as np
 
 
@@ -34,12 +34,12 @@ class BaseCluster:
 
     @classmethod
     def get_label(self):
-        return self.__name__.lower
+        return self.__name__.lower()
 
 
 class OPTICS(BaseCluster):
     def __init__(self, immutable_config):
-        super().__init__(sklearn.cluster.OPTICS, immutable_config)
+        super().__init__(cls.OPTICS, immutable_config)
 
     def fit(self, X, config, return_labels=False):
         return super().fit(X, config, return_labels=return_labels)
@@ -50,7 +50,9 @@ class OPTICS(BaseCluster):
         min_samples_range = params_range["min_samples"]
         eps = eps_range[0]
         while eps < eps_range[1]:
-            for i in range(min_samples_range[0], min_samples_range[1]):
+            for i in range(
+                min_samples_range[0], min(min_samples_range[1], len(X))
+            ):
                 labels = self.obj(
                     min_samples=i, max_eps=eps, **self.immutable_config
                 ).fit_predict(X)
@@ -77,7 +79,9 @@ class HDBSCAN(BaseCluster):
     def fine_tune(self, X, scorer, metric, params_range, sort=False):
         results = []
         min_cluster_size_range = params_range["min_cluster_size"]
-        for i in range(min_cluster_size_range[0], min_cluster_size_range[1]):
+        for i in range(
+            min_cluster_size_range[0], min(min_cluster_size_range[1], len(X))
+        ):
             labels = self.obj(min_cluster_size=i).fit_predict(X)
             if len(np.unique(labels)) == 1:
                 continue
@@ -92,7 +96,7 @@ class HDBSCAN(BaseCluster):
 
 class KMeans(BaseCluster):
     def __init__(self, immutable_config):
-        super().__init__(sklearn.cluster.KMeans, immutable_config)
+        super().__init__(cls.KMeans, immutable_config)
 
     def fit(self, X, config, return_labels=False):
         return super().fit(X, config, return_labels=return_labels)
@@ -100,7 +104,9 @@ class KMeans(BaseCluster):
     def fine_tune(self, X, scorer, metric, params_range, sort=False):
         results = []
         n_clusters_range = params_range["n_clusters"]
-        for n_clusters in range(n_clusters_range[0], n_clusters_range[1]):
+        for n_clusters in range(
+            n_clusters_range[0], min(n_clusters_range[1], len(X))
+        ):
             labels = self.obj(
                 n_clusters=n_clusters, **self.immutable_config
             ).fit_predict(X)
