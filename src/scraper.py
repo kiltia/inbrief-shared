@@ -117,7 +117,6 @@ async def get_content_from_channel(
     offset_date = (
         datetime.strptime(offset_date, DATE_FORMAT) if offset_date else None
     )
-
     api_iterator = client.iter_messages(
         channel_entity, offset_date=offset_date
     )
