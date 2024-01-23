@@ -41,9 +41,6 @@ class OPTICS(BaseCluster):
     def __init__(self, immutable_config):
         super().__init__(cls.OPTICS, immutable_config)
 
-    def fit(self, X, config, return_labels=False):
-        return super().fit(X, config, return_labels=return_labels)
-
     def fine_tune(self, X, scorer, metric, params_range, sort=False):
         results = []
         eps_range = params_range["eps"]
@@ -61,7 +58,9 @@ class OPTICS(BaseCluster):
                     continue
                 metric_value = scorer(X, labels, metric=metric)
                 if not np.isnan(metric_value):
-                    results.append((eps, {"min_samples": i, "max_eps": eps}))
+                    results.append(
+                        (metric_value, {"min_samples": i, "max_eps": eps})
+                    )
             eps += 0.05
 
         if sort:
@@ -95,9 +94,6 @@ class KMeans(BaseCluster):
     def __init__(self, immutable_config):
         super().__init__(cls.KMeans, immutable_config)
 
-    def fit(self, X, config, return_labels=False):
-        return super().fit(X, config, return_labels=return_labels)
-
     def fine_tune(self, X, scorer, metric, params_range, sort=False):
         results = []
         n_clusters_range = params_range["n_clusters"]
@@ -110,6 +106,34 @@ class KMeans(BaseCluster):
             metric_value = scorer(X, labels, metric=metric)
             if not np.isnan(metric_value):
                 results.append((metric_value, {"n_clusters": n_clusters}))
+
+        if sort:
+            return sorted(results, key=lambda x: x[0], reverse=True)
+        return results
+
+
+class AGGLOMERATIVE(BaseCluster):
+    def __init__(self, immutable_config):
+        super().__init__(cls.AgglomerativeClustering)
+
+    def fine_tune(self, X, scorer, metric, params_range, sort=False):
+        results = []
+        distance_threshold_range = params_range["distance_threshold"]
+        distance_threshold = distance_threshold_range[0]
+        while distance_threshold < distance_threshold_range[1]:
+            labels = self.obj(
+                distance_threshold=distance_threshold,
+                n_clusters=None,
+                **self.immutable_config,
+            ).fit_predict(X)
+            if len(np.unique(labels)) == 1:
+                break
+            metric_value = scorer(X, labels, metric=metric)
+            if not np.isnan(metric_value):
+                results.append(
+                    (metric_value, {"distance_threshold": distance_threshold})
+                )
+            distance_threshold += 0.05
 
         if sort:
             return sorted(results, key=lambda x: x[0], reverse=True)
