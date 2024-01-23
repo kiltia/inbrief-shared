@@ -59,9 +59,6 @@ class OPTICS(BaseCluster):
                 if len(np.unique(labels)) == 1:
                     eps += 0.05
                     continue
-                for i in range(-1, np.max(labels) + 1):
-                    if len(labels[labels == i]) < 3:
-                        labels[labels == i] = -1
                 metric_value = scorer(X, labels, metric=metric)
                 if not np.isnan(metric_value):
                     results.append((eps, {"min_samples": i, "max_eps": eps}))
@@ -73,8 +70,8 @@ class OPTICS(BaseCluster):
 
 
 class HDBSCAN(BaseCluster):
-    def __init__(self):
-        super().__init__(hdbscan.HDBSCAN)
+    def __init__(self, immutable_config):
+        super().__init__(hdbscan.HDBSCAN, immutable_config)
 
     def fine_tune(self, X, scorer, metric, params_range, sort=False):
         results = []

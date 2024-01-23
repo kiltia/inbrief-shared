@@ -10,4 +10,7 @@ def silhouette(X, labels, metric="cityblock"):
         if labels_copy[i] == -1:
             labels_copy[i] = cur
             cur += 1
-    return silhouette_score(X, labels_copy, metric=metric)
+    try:
+        return silhouette_score(X, labels_copy, metric=metric)
+    except ValueError:
+        return np.nan
