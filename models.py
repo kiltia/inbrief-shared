@@ -47,6 +47,7 @@ class EmbeddingSource(str, Enum):
 
 
 class ClusteringMethod(str, Enum):
+    HDBSCAN = "hdbscan"
     DBSCAN = "dbscan"
     KMeans = "kmeans"
     AffinityPropagation = "affinity_propagation"
