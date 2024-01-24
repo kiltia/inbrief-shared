@@ -11,7 +11,7 @@ def get_clustering_method(method_name: str):
 
 
 class BaseCluster:
-    def __init__(self, obj, immutable_config={}):
+    def __init__(self, obj, immutable_config):
         self.obj = obj
         self.immutable_config = immutable_config
 
@@ -29,7 +29,8 @@ class BaseCluster:
             clusters[labels[i]].append(i)
         return clusters
 
-    def link_text(clusters, texts):
+    @classmethod
+    def link_text(self, clusters, texts):
         return list(map(lambda x: list(map(lambda y: texts[y], x)), clusters))
 
     @classmethod
@@ -112,9 +113,9 @@ class KMeans(BaseCluster):
         return results
 
 
-class AGGLOMERATIVE(BaseCluster):
+class Agglomerative(BaseCluster):
     def __init__(self, immutable_config):
-        super().__init__(cls.AgglomerativeClustering)
+        super().__init__(cls.AgglomerativeClustering, immutable_config)
 
     def fine_tune(self, X, scorer, metric, params_range, sort=False):
         results = []
@@ -123,7 +124,6 @@ class AGGLOMERATIVE(BaseCluster):
         while distance_threshold < distance_threshold_range[1]:
             labels = self.obj(
                 distance_threshold=distance_threshold,
-                n_clusters=None,
                 **self.immutable_config,
             ).fit_predict(X)
             if len(np.unique(labels)) == 1:
