@@ -50,10 +50,10 @@ class ClusteringMethod(str, Enum):
     HDBSCAN = "hdbscan"
     DBSCAN = "dbscan"
     KMeans = "kmeans"
-    AffinityPropagation = "affinity_propagation"
+    Agglomerative = "agglomerative"
     OPTICS = "optics"
+    AffinityPropagation = "affinity_propagation"
     SpectralClustering = "spectral_clustering"
-    AgglomerativeClustering = "agglomerative_clustering"
 
     @classmethod
     def has_value(cls, value):
@@ -137,6 +137,7 @@ class SyncRequest(BaseRequest):
 
 class LinkingScorers(str, Enum):
     SILHOUETTE = "silhouette"
+    CALINSKI_HARABASZ = "calinski_harabasz"
 
 
 class DistancesMetrics(str, Enum):
