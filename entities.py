@@ -55,12 +55,16 @@ class StoryPosts(Entity):
     text: str
     date: str
     reference: str
+    request_id: UUID
+    title: str | None
 
     _table_name: ClassVar[str] = "story_posts"
 
 
 class Story(Entity):
     story_id: UUID
+    request_id: UUID
+    title: str | None
 
     _table_name: ClassVar[str] = "story"
     _pk: ClassVar[str] = "story_id"
