@@ -53,7 +53,7 @@ class ClusteringMethod(str, Enum):
     Agglomerative = "agglomerative"
     OPTICS = "optics"
     AffinityPropagation = "affinity_propagation"
-    SpectralClustering = "spectral_clustering"
+    SpectralClustering = "spectral"
 
     @classmethod
     def has_value(cls, value):
@@ -138,6 +138,7 @@ class SyncRequest(BaseRequest):
 class LinkingScorers(str, Enum):
     SILHOUETTE = "silhouette"
     CALINSKI_HARABASZ = "calinski_harabasz"
+    WEIGHTED_METRICS = "weighted_metrics"
 
 
 class DistancesMetrics(str, Enum):
