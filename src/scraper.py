@@ -21,6 +21,7 @@ logger = logging.getLogger("app")
 def get_worker(
     channel_entity,
     client: TelegramClient,
+    openai_client,
     embedders: List[EmbeddingProvider],
     classifier,
     social: bool,
@@ -80,7 +81,7 @@ def get_worker(
         # to enable batch processing on GPU to increase overall performance
         for emb in embedders:
             if isinstance(emb, OpenAiEmbedder):
-                embeddings = (await emb.aget_embeddings([message.message]))[0]
+                embeddings = (await emb.aget_embeddings([message.message], openai_client))[0]
             else:
                 embeddings = emb.get_embeddings([message.message])[0]
             content["embeddings"].update({emb.get_label(): embeddings})
@@ -106,6 +107,7 @@ def get_worker(
 async def get_content_from_channel(
     channel_entity,
     client: TelegramClient,
+    openai_client,
     embedders: List[EmbeddingProvider],
     classifier,
     end_date,
@@ -121,7 +123,7 @@ async def get_content_from_channel(
         channel_entity, offset_date=offset_date
     )
     get_content = get_worker(
-        channel_entity, client, embedders, classifier, **kwargs
+        channel_entity, client, openai_client, embedders, classifier, **kwargs
     )
     async for message in api_iterator:
         try:
@@ -173,6 +175,7 @@ async def parse_channels(
     logger.debug("Getting all required embedders")
 
     client = ctx.client
+    openai_client = ctx.openai_client
     embedders = get_embedders(required_embedders)
     classifier = ctx.classifier
     result: List[Source] = []
@@ -190,7 +193,7 @@ async def parse_channels(
             channel, fields=["title", "about", "subscribers"]
         )
         response = await get_content_from_channel(
-            channel_entity, client, embedders, classifier, **parse_args
+            channel_entity, client, openai_client, embedders, classifier, **parse_args
         )
         result = result + response
 

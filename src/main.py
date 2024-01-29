@@ -2,7 +2,7 @@ import logging
 import os
 from typing import List
 
-import openai
+from openai_api import get_async_client
 from asgi_correlation_id import CorrelationIdMiddleware
 from databases import Database
 from embedders import init_embedders
@@ -36,6 +36,7 @@ class Context:
             self.creds.api_hash,
             system_version="4.16.30-vxCUSTOM",
         )
+        self.openai_client = get_async_client(os.getenv("OPENAI_API_KEY"))
         self.shared_settings = SharedResources(
             f"{SHARED_CONFIG_PATH}/settings.json"
         )
@@ -83,7 +84,6 @@ async def main() -> None:
     configure_logging()
     logger.info("Started loading embedders")
     init_embedders(ctx.shared_settings.components.embedders)
-    openai.api_key = os.getenv("OPENAI_API_KEY")
     await ctx.init_db()
     await ctx.client.start()
 
