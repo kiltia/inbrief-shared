@@ -44,9 +44,13 @@ class Matcher:
             embeddings = PCA(n_components).fit_transform(embeddings)
 
         method = get_clustering_method(method_name.value)(immutable_config)
-        best_config = method.fine_tune(
+        configs = method.fine_tune(
             embeddings, self.scorer, self.metric, params_range, sort=True
-        )[0][1]
-        stories_nums = method.fit(embeddings, best_config)
+        )
+        if configs:
+            best_config = configs[0][1]
+            stories_nums = method.fit(embeddings, best_config)
+        else:
+            stories_nums = method._form_clusters([i for i in range(len(embeddings))])
 
         return stories_nums
