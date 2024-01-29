@@ -25,7 +25,7 @@ logger = logging.getLogger("app")
 
 
 base_retry = retry(
-    retry=retry_if_exception_type(openai.error.RateLimitError),
+    retry=retry_if_exception_type(openai.RateLimitError),
     wait=wait_exponential(min=2, max=30, multiplier=1.5),
     after=after_log(logger, log_level=logging.DEBUG),
     before=before_log(logger, log_level=logging.DEBUG),
@@ -36,10 +36,10 @@ base_retry = retry(
 
 
 @base_retry
-async def aget_embeddings(input, model):
-    embs = (await openai.Embedding.acreate(input=input, model=model))["data"]
+async def aget_embeddings(input, model, client):
+    embs = (await client.embeddings.create(input=input, model=model)).data
 
-    return list(map(lambda x: x["embedding"], embs))
+    return list(map(lambda x: x.embedding, embs))
 
 
 # NOTE(nrydanov): This method makes paid request to OpenAI
@@ -47,6 +47,7 @@ async def aget_embeddings(input, model):
 async def asummarize(
     input,
     model,
+    client,
     max_words=200,
     timeout=30,
     additional_context=None,
@@ -56,22 +57,22 @@ async def asummarize(
         f"Sending summary request to OpenAI with {count_tokens(messages, model)} tokens"
     )
     return (
-        await openai.ChatCompletion.acreate(
+        await client.chat.completions.create(
             model=model,
             messages=messages,
             timeout=timeout,
         )
-    )["choices"][0]["message"]["content"]
+    ).choices[0].message.content
 
 
 # NOTE(nrydanov): This method makes paid request to OpenAI
 @base_retry
-async def aget_title(input, model, max_words=7):
+async def aget_title(input, model, client, max_words=7):
     messages = get_title_context(input, max_words)
     logger.debug(
         f"Sending title request to OpenAI with {count_tokens(messages, model)} tokens"
     )
-    response = await openai.ChatCompletion.acreate(
+    response = await client.chat.completions.create(
         model=model,
         messages=messages,
         timeout=30,
@@ -79,7 +80,7 @@ async def aget_title(input, model, max_words=7):
 
     logger.debug(f"Got response from OpenAI: {response}")
 
-    return response["choices"][0]["message"]["content"]
+    return response.choices[0].message.content
 
 
 # NOTE(nrydanov): This method makes paid request to OpenAI
@@ -87,6 +88,7 @@ async def aget_title(input, model, max_words=7):
 async def aedit(
     input,
     model,
+    client,
     style,
     max_words=100,
     timeout=30,
@@ -96,15 +98,15 @@ async def aedit(
         f"Sending edit request to OpenAI with {count_tokens(messages, model)} tokens"
     )
     return (
-        await openai.ChatCompletion.acreate(
+        await client.chat.completions.create(
             model=model,
             messages=messages,
             timeout=timeout,
         )
-    )["choices"][0]["message"]["content"]
+    ).choices[0].message.content
 
 
-def classify_attempt(attempt, categories, max_retries, **kwargs):
+def classify_attempt(attempt, categories, client, max_retries, **kwargs):
     def validate_response(response, categories):
         if response in categories:
             return (True, response)
@@ -117,7 +119,7 @@ def classify_attempt(attempt, categories, max_retries, **kwargs):
     if attempt > max_retries:
         return None
     logger.debug(f"Creating request {attempt + 1} for chat completion")
-    completion = openai.ChatCompletion.create(**kwargs)
+    completion = client.chat.completions.create(**kwargs)
     response = completion["choices"][0]["message"]["content"]
     logger.debug(f"Got response from OpenAI: {response}")
     status, value = validate_response(response, categories)
@@ -154,12 +156,13 @@ def classify_attempt(attempt, categories, max_retries, **kwargs):
     stop=stop_after_attempt(3),
     reraise=True,
 )
-def classify(text, categories, model, max_retries):
+def classify(text, categories, client, model, max_retries):
     class_list = f"Вот список классов: {','.join(categories)}"
     max_tokens = np.max(list(map(lambda x: len(x), categories)))
     return classify_attempt(
         0,
         categories,
+        client=client,
         model=model,
         messages=[
             {"role": "system", "content": CLASSIFY_TASK + "\n" + class_list},

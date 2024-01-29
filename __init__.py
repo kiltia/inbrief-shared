@@ -5,3 +5,4 @@ from .core import (
     aget_title, 
     asummarize
 )
+from .utils import get_async_client
