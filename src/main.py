@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from typing import List
 from uuid import UUID, uuid4
+from contextlib import asynccontextmanager
 
 from asgi_correlation_id import CorrelationIdMiddleware
 from databases import Database
@@ -17,7 +18,17 @@ from shared.resources import SharedResources
 from shared.routes import LinkerRoutes
 from shared.utils import DB_DATE_FORMAT, SHARED_CONFIG_PATH
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    configure_logging()
+    ctx.ranker = Ranker(init_scorers())
+    await ctx.init_db()
+    yield
+    await ctx.dispose_db()
+
+
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(CorrelationIdMiddleware, validator=None)
 
 
@@ -124,16 +135,3 @@ async def get_stories(request: LinkingRequest):
 @app.get("/")
 def hello_world():
     return "Linker API is running!"
-
-
-@app.on_event("shutdown")
-async def dispose():
-    await ctx.dispose_db()
-
-
-@app.on_event("startup")
-async def main() -> None:
-    configure_logging()
-    ctx.ranker = Ranker(init_scorers())
-
-    await ctx.init_db()
