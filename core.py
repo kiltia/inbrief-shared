@@ -57,12 +57,16 @@ async def asummarize(
         f"Sending summary request to OpenAI with {count_tokens(messages, model)} tokens"
     )
     return (
-        await client.chat.completions.create(
-            model=model,
-            messages=messages,
-            timeout=timeout,
+        (
+            await client.chat.completions.create(
+                model=model,
+                messages=messages,
+                timeout=timeout,
+            )
         )
-    ).choices[0].message.content
+        .choices[0]
+        .message.content
+    )
 
 
 # NOTE(nrydanov): This method makes paid request to OpenAI
@@ -98,12 +102,16 @@ async def aedit(
         f"Sending edit request to OpenAI with {count_tokens(messages, model)} tokens"
     )
     return (
-        await client.chat.completions.create(
-            model=model,
-            messages=messages,
-            timeout=timeout,
+        (
+            await client.chat.completions.create(
+                model=model,
+                messages=messages,
+                timeout=timeout,
+            )
         )
-    ).choices[0].message.content
+        .choices[0]
+        .message.content
+    )
 
 
 def classify_attempt(attempt, categories, client, max_retries, **kwargs):

@@ -15,7 +15,5 @@ def count_tokens(messages, model):
 
 
 def get_async_client(api_key):
-    client = AsyncOpenAI(
-        api_key=api_key
-    )
+    client = AsyncOpenAI(api_key=api_key)
     return client
