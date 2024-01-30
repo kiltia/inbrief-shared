@@ -81,7 +81,9 @@ def get_worker(
         # to enable batch processing on GPU to increase overall performance
         for emb in embedders:
             if isinstance(emb, OpenAiEmbedder):
-                embeddings = (await emb.aget_embeddings([message.message], openai_client))[0]
+                embeddings = (
+                    await emb.aget_embeddings([message.message], openai_client)
+                )[0]
             else:
                 embeddings = emb.get_embeddings([message.message])[0]
             content["embeddings"].update({emb.get_label(): embeddings})
@@ -193,7 +195,12 @@ async def parse_channels(
             channel, fields=["title", "about", "subscribers"]
         )
         response = await get_content_from_channel(
-            channel_entity, client, openai_client, embedders, classifier, **parse_args
+            channel_entity,
+            client,
+            openai_client,
+            embedders,
+            classifier,
+            **parse_args,
         )
         result = result + response
 

@@ -29,7 +29,9 @@ class OpenAiEmbedder(EmbeddingProvider):
         self.model = model
 
     async def aget_embeddings(self, inputs: list, openai_client, **kwargs):
-        return await openai_api.aget_embeddings(inputs, self.model, openai_client)
+        return await openai_api.aget_embeddings(
+            inputs, self.model, openai_client
+        )
 
 
 class MiniLmEmbedder(EmbeddingProvider):
