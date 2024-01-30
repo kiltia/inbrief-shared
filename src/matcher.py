@@ -51,6 +51,8 @@ class Matcher:
             best_config = configs[0][1]
             stories_nums = method.fit(embeddings, best_config)
         else:
-            stories_nums = method._form_clusters([i for i in range(len(embeddings))])
+            stories_nums = method._form_clusters(
+                [i for i in range(len(embeddings))]
+            )
 
         return stories_nums

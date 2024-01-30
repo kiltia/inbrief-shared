@@ -12,6 +12,7 @@ def cos_sim(embedding1, embedding2):
 def get_class_score(embedding1, embedding2, scorer=cos_sim):
     return scorer(np.array(embedding1), np.array(embedding2))
 
+
 def processing_noise(labels):
     labels_copy = deepcopy(labels)
     cur = np.max(labels) + 1
