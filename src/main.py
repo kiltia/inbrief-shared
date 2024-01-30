@@ -1,6 +1,7 @@
 import logging
 import os
 from typing import List
+from contextlib import asynccontextmanager
 
 from openai_api import get_async_client
 from asgi_correlation_id import CorrelationIdMiddleware
@@ -21,9 +22,22 @@ from shared.resources import SharedResources
 from shared.routes import ScraperRoutes
 from shared.utils import SHARED_CONFIG_PATH
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    configure_logging()
+    logger.info("Started loading embedders")
+    init_embedders(ctx.shared_settings.components.embedders)
+    await ctx.init_db()
+    await ctx.client.start()
+    yield
+    await ctx.client.disconnect()
+    await ctx.dispose_db()
+
+
 logger = logging.getLogger("app")
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(CorrelationIdMiddleware, validator=None)
 
 
@@ -77,18 +91,3 @@ async def sync(link: str):
     logger.debug("Started serving sync request")
     response = await retrieve_channels(ctx, link)
     return response
-
-
-@app.on_event("startup")
-async def main() -> None:
-    configure_logging()
-    logger.info("Started loading embedders")
-    init_embedders(ctx.shared_settings.components.embedders)
-    await ctx.init_db()
-    await ctx.client.start()
-
-
-@app.on_event("shutdown")
-async def disconnect() -> None:
-    await ctx.client.disconnect()
-    await ctx.dispose_db()
