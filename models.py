@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from shared.entities import Source
+from shared.entities import StorySources
 
 
 class JSONSettings(BaseModel):
@@ -148,14 +148,44 @@ class DistancesMetrics(str, Enum):
     HAVERSINE = "haversine"
 
 
-class LinkingRequest(BaseRequest):
-    entities: List[Source]
-    method: LinkingMethod
-    embedding_source: EmbeddingSource
-    scorer: LinkingScorers
-    metric: DistancesMetrics
+class Entry(BaseModel):
+    text: str
+    embeddings: str
+    title: str | None = None
+
+
+StoriesNums = list[list[int]]
+Embeddings = list[list[float]]
+
+
+class PlotMetadata(BaseModel):
+    score: float
     config: dict
-    required_scorers: List[str] | None = None
+
+
+class PlotEntry(BaseModel):
+    metadata: PlotMetadata
+    stories_nums: StoriesNums
+
+
+class PlotData(BaseModel):
+    payload: list[StorySources]
+    results: list[PlotEntry]
+    embeddings: Embeddings
+
+
+class LinkingConfig(BaseRequest):
+    scorer: LinkingScorers = LinkingScorers.SILHOUETTE
+    metric: DistancesMetrics = DistancesMetrics.EUCLIDEAN
+    embedding_source: EmbeddingSource = EmbeddingSource.OPENAI
+    method: ClusteringMethod
+
+
+class LinkingRequest(BaseRequest):
+    entries: List[Entry]
+    config: LinkingConfig
+    settings: dict
+    return_plot_data: bool = False
 
 
 # Summarizer API

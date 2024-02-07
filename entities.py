@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import ClassVar, List
 from uuid import UUID
 
@@ -26,6 +27,17 @@ class Folder(Entity):
     _pk: ClassVar[str] = "chat_folder_link"
 
 
+class Request(Entity):
+    chat_id: int
+    request_id: UUID
+    request_type: str
+    status: str
+    config_id: int
+    time_passed: timedelta
+
+    _table_name: ClassVar[str] = "request"
+
+
 class Source(Entity):
     source_id: int
     text: str
@@ -42,29 +54,29 @@ class Source(Entity):
     _pk: ClassVar[str] = "source_id"
 
 
-class StoryPost(Entity):
+class StorySource(Entity):
     story_id: UUID
     source_id: int
     channel_id: int
 
-    _table_name: ClassVar[str] = "story_post"
+    _table_name: ClassVar[str] = "story_source"
 
 
-class StoryPosts(Entity):
+class StorySources(Entity):
     story_id: UUID
+    request_id: UUID
     text: str
     date: str
     reference: str
-    request_id: UUID
-    title: str | None
+    embeddings: str
+    title: str | None = None
 
-    _table_name: ClassVar[str] = "story_posts"
+    _table_name: ClassVar[str] = "story_sources"
 
 
 class Story(Entity):
     story_id: UUID
     request_id: UUID
-    title: str | None
 
     _table_name: ClassVar[str] = "story"
     _pk: ClassVar[str] = "story_id"

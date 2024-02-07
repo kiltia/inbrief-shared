@@ -5,6 +5,7 @@ class ScraperRoutes:
 
 class LinkerRoutes:
     GET_STORIES = "/get_stories"
+    RANK = "/rank"
 
 
 class SupervisorRoutes:
@@ -15,7 +16,9 @@ class SupervisorRoutes:
     PRESET = "/api/preset"
     CALLBACK = "/api/callback"
     REGISTER = "/api/user"
+    REQUEST = "/api/request"
     CONFIG = "/api/config"
+    DASH = "/api/dash"
 
 
 class SummarizerRoutes:

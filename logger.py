@@ -9,10 +9,14 @@ LOGGING_FORMAT = (
 )
 
 
-def configure_logging() -> None:
+def configure_logging(override_path=None) -> None:
     from functools import partial, partialmethod
 
-    with open(f"{SHARED_CONFIG_PATH}/settings.json") as f:
+    if override_path is not None:
+        path = override_path
+    else:
+        path = f"{SHARED_CONFIG_PATH}/settings.json"
+    with open(path) as f:
         d = json.load(f)
         dictConfig(d["logger"])
 
