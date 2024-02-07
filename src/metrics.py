@@ -1,4 +1,3 @@
-
 import numpy as np
 from sklearn.metrics import calinski_harabasz_score, silhouette_score
 from utils import processing_noise
