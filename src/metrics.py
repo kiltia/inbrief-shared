@@ -1,6 +1,7 @@
+
 import numpy as np
+from sklearn.metrics import calinski_harabasz_score, silhouette_score
 from utils import processing_noise
-from sklearn.metrics import silhouette_score, calinski_harabasz_score
 
 
 def silhouette(X, labels, metric="cityblock"):

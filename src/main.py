@@ -1,28 +1,23 @@
 import logging
-from datetime import datetime
-from typing import List
-from uuid import UUID, uuid4
 from contextlib import asynccontextmanager
 
 from asgi_correlation_id import CorrelationIdMiddleware
 from databases import Database
 from fastapi import FastAPI
 from matcher import Matcher
-from ranking import Ranker, init_scorers
 
 from shared.db import PgRepository, create_db_string
-from shared.entities import Source, Story, StoryPost
+from shared.entities import Story, StorySource
 from shared.logger import configure_logging
 from shared.models import LinkingRequest
 from shared.resources import SharedResources
 from shared.routes import LinkerRoutes
-from shared.utils import DB_DATE_FORMAT, SHARED_CONFIG_PATH
+from shared.utils import SHARED_CONFIG_PATH
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     configure_logging()
-    ctx.ranker = Ranker(init_scorers())
     await ctx.init_db()
     yield
     await ctx.dispose_db()
@@ -42,7 +37,7 @@ class Context:
         )
         self._pg = Database(create_db_string(self.shared_resources.pg_creds))
         self.story_repository = PgRepository(self._pg, Story)
-        self.story_post_repository = PgRepository(self._pg, StoryPost)
+        self.story_post_repository = PgRepository(self._pg, StorySource)
         self.ranker = None
 
     async def init_db(self):
@@ -58,78 +53,22 @@ ctx = Context()
 @app.post(LinkerRoutes.GET_STORIES)
 async def get_stories(request: LinkingRequest):
     matcher = Matcher(
-        request.entities,
-        request.embedding_source,
-        request.scorer,
-        request.metric,
-    )
-    stories_nums = matcher.get_stories(
-        method_name=request.method, **request.config
+        request.entries,
+        request.config.embedding_source,
+        request.config.scorer,
+        request.config.metric,
     )
 
-    uuids = [
-        uuid4() for _ in range(len(stories_nums) + len(stories_nums[-1]) - 1)
-    ]
-
-    stories_uuids = [Story(story_id=i) for i in uuids]
-    await ctx.story_repository.add(stories_uuids)
-
-    entities = []
-    stories: List[tuple[UUID, List[Source]]] = []
-    uuid_num = 0
-    for i in range(len(stories_nums[:-1])):
-        stories.append((uuids[uuid_num], []))
-        for j in range(len(stories_nums[i])):
-            source = request.entities[stories_nums[i][j]]
-            entity = StoryPost(
-                story_id=uuids[uuid_num],
-                source_id=source.source_id,
-                channel_id=source.channel_id,
-            )
-            entities.append(entity)
-            stories[i][1].append(source)
-
-        uuid_num += 1
-    # NOTE(sokunkov): We need to finally decide what we want to do
-    # with the noisy cluster
-    for i in range(len(stories_nums[-1])):
-        stories.append((uuids[uuid_num], []))
-        source = request.entities[stories_nums[-1][i]]
-        entity = StoryPost(
-            story_id=uuids[uuid_num],
-            source_id=source.source_id,
-            channel_id=request.entities[stories_nums[-1][i]].channel_id,
-        )
-        entities.append(entity)
-        stories[-1][1].append(source)
-        uuid_num += 1
-
-    await ctx.story_post_repository.add(entities)
-
-    entities = stories_nums[:-1]
-    entities.extend(stories_nums[-1])
-
-    weights = ctx.shared_resources.config.ranking.weights
-
-    stories = list(
-        map(
-            lambda t: (
-                t[0],
-                sorted(
-                    t[1],
-                    key=lambda x: datetime.strptime(x.date, DB_DATE_FORMAT),
-                ),
-            ),
-            stories,
-        )
+    results, embeddings = matcher.get_stories(
+        method_name=request.config.method,
+        **request.settings,
+        return_plot_data=request.return_plot_data,
     )
 
-    stories = ctx.ranker.get_sorted(
-        stories, request.required_scorers, weights=weights
-    )
-
-    story_ids = list(map(lambda t: t[0], stories))
-    return story_ids
+    if request.return_plot_data:
+        return {"results": results, "embeddings": embeddings.tolist()}
+    else:
+        return {"results": results}
 
 
 @app.get("/")

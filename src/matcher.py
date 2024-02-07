@@ -1,10 +1,10 @@
 import json
+
 import metrics
-
 from clustering import get_clustering_method
-from shared.models import EmbeddingSource
-
 from sklearn.decomposition import PCA
+
+from shared.models import EmbeddingSource
 
 
 class Matcher:
@@ -20,8 +20,10 @@ class Matcher:
         self,
         method_name,
         params_range,
-        immutable_config={},
+        immutable_config,
+        *,
         n_components=None,
+        return_plot_data=False,
     ):
         embs = list(map(lambda x: json.loads(x.embeddings), self.entities))
         embs = {k: [entity[k] for entity in embs] for k in embs[0]}
@@ -44,15 +46,33 @@ class Matcher:
             embeddings = PCA(n_components).fit_transform(embeddings)
 
         method = get_clustering_method(method_name.value)(immutable_config)
-        configs = method.fine_tune(
+        ranked_entries = method.fine_tune(
             embeddings, self.scorer, self.metric, params_range, sort=True
         )
-        if configs:
-            best_config = configs[0][1]
-            stories_nums = method.fit(embeddings, best_config)
+
+        results = []
+        if return_plot_data:
+            for rank_entry in ranked_entries:
+                stories_nums = method.fit(embeddings, rank_entry[1])
+                results.append(
+                    {
+                        "metadata": {
+                            "score": rank_entry[0],
+                            "config": rank_entry[1],
+                        },
+                        "stories_nums": stories_nums,
+                    }
+                )
         else:
-            stories_nums = method._form_clusters(
-                [i for i in range(len(embeddings))]
+            stories_nums = method.fit(embeddings, ranked_entries[0][1])
+            results.append(
+                {
+                    "metadata": {
+                        "value": ranked_entries[0][0],
+                        "config": ranked_entries[0][1],
+                    },
+                    "stories_nums": stories_nums,
+                }
             )
 
-        return stories_nums
+        return results, embeddings

@@ -1,6 +1,6 @@
 import hdbscan
-import sklearn.cluster as cls
 import numpy as np
+import sklearn.cluster as cls
 
 
 def get_clustering_method(method_name: str):
