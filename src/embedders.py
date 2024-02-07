@@ -25,7 +25,7 @@ class EmbeddingProvider:
 
 class OpenAiEmbedder(EmbeddingProvider):
     # TODO(nrydanov): Pass default parameter from configuration file instead
-    def __init__(self, model: str = "text-embedding-ada-002") -> None:
+    def __init__(self, model: str = "text-embedding-3-large") -> None:
         self.model = model
 
     async def aget_embeddings(self, inputs: list, openai_client, **kwargs):
