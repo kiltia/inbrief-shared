@@ -5,12 +5,12 @@ from contextlib import asynccontextmanager
 
 from openai_api import get_async_client
 from asgi_correlation_id import CorrelationIdMiddleware
+from classifiers import get_classifier
 from databases import Database
 from embedders import init_embedders
 from fastapi import FastAPI, Response, status
 from telethon import TelegramClient
 from utils import SESSION_PATH
-from classifiers import get_classifier
 
 from config import Credentials
 from scraper import parse_channels, retrieve_channels

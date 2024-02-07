@@ -1,12 +1,12 @@
-from rb_tocase import Case
-from typing import List
 import logging
+from typing import List
 
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
-from shared.utils import CACHE_PATH
-from utils import CLASSES_NAMES
 import torch
+from rb_tocase import Case
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from utils import CLASSES_NAMES
 
+from shared.utils import CACHE_PATH
 
 logger = logging.getLogger("app")
 
