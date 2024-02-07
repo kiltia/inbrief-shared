@@ -151,7 +151,6 @@ class DistancesMetrics(str, Enum):
 class Entry(BaseModel):
     text: str
     embeddings: str
-    title: str | None = None
 
 
 StoriesNums = list[list[int]]
