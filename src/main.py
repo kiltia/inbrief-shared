@@ -66,7 +66,7 @@ async def get_stories(request: LinkingRequest):
     )
 
     if request.return_plot_data:
-        return {"results": results, "embeddings": embeddings}
+        return {"results": results, "embeddings": embeddings.tolist()}
     else:
         return {"results": results}
 

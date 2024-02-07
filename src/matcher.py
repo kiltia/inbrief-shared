@@ -1,6 +1,7 @@
 import json
 
 import metrics
+import numpy as np
 from clustering import get_clustering_method
 from sklearn.decomposition import PCA
 
@@ -41,6 +42,8 @@ class Matcher:
                 embeddings = embs["open-ai-embedder"]
             case EmbeddingSource.MLM:
                 embeddings = embs["mini-lm-embedder"]
+
+        embeddings = np.array(embeddings)
 
         if n_components is not None and n_components < len(embeddings):
             embeddings = PCA(n_components).fit_transform(embeddings)
