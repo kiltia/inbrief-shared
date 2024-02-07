@@ -1,9 +1,8 @@
 import logging
 import os
-from typing import List
 from contextlib import asynccontextmanager
+from typing import List
 
-from openai_api import get_async_client
 from asgi_correlation_id import CorrelationIdMiddleware
 from classifiers import get_classifier
 from databases import Database
@@ -13,6 +12,7 @@ from telethon import TelegramClient
 from utils import SESSION_PATH
 
 from config import Credentials
+from openai_api import get_async_client
 from scraper import parse_channels, retrieve_channels
 from shared.db import PgRepository, create_db_string
 from shared.entities import Channel, Folder, Source
