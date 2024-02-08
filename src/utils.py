@@ -13,7 +13,7 @@ def get_class_score(embedding1, embedding2, scorer=cos_sim):
     return scorer(np.array(embedding1), np.array(embedding2))
 
 
-def processing_noise(labels):
+def noises_to_single_cluster(labels):
     labels_copy = deepcopy(labels)
     cur = np.max(labels) + 1
     for i in range(len(labels_copy)):
@@ -21,3 +21,8 @@ def processing_noise(labels):
             labels_copy[i] = cur
             cur += 1
     return labels_copy
+
+
+def normalize(arr):
+    arr = (arr - min(arr)) / (max(arr) - min(arr))
+    return arr
