@@ -140,3 +140,26 @@ class Agglomerative(BaseCluster):
         if sort:
             return sorted(results, key=lambda x: x[0], reverse=True)
         return results
+
+
+class Spectral(BaseCluster):
+    def __init__(self, immutable_config):
+        super().__init__(cls.SpectralClustering, immutable_config)
+
+    def fine_tune(self, X, scorer, metric, params_range, sort=False):
+        results = []
+        n_clusters_range = params_range["n_clusters"]
+        for n_clusters in range(
+            n_clusters_range[0], min(n_clusters_range[1], len(X))
+        ):
+            labels = self.obj(
+                n_clusters=n_clusters,
+                **self.immutable_config,
+            ).fit_predict(X)
+            metric_value = scorer(X, labels, metric=metric)
+            if not np.isnan(metric_value):
+                results.append((metric_value, {"n_clusters": n_clusters}))
+
+        if sort:
+            return sorted(results, key=lambda x: x[0], reverse=True)
+        return results
