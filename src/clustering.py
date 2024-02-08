@@ -47,6 +47,7 @@ class OPTICS(BaseCluster):
         eps_range = params_range["eps"]
         min_samples_range = params_range["min_samples"]
         eps = eps_range[0]
+        step = eps_range[2]
         while eps < eps_range[1]:
             for i in range(
                 min_samples_range[0], min(min_samples_range[1], len(X))
@@ -55,14 +56,14 @@ class OPTICS(BaseCluster):
                     min_samples=i, max_eps=eps, **self.immutable_config
                 ).fit_predict(X)
                 if len(np.unique(labels)) == 1:
-                    eps += 0.05
+                    eps += step
                     continue
                 metric_value = scorer(X, labels, metric=metric)
                 if not np.isnan(metric_value):
                     results.append(
                         (metric_value, {"min_samples": i, "max_eps": eps})
                     )
-            eps += 0.05
+            eps += step
 
         if sort:
             return sorted(results, key=lambda x: x[0], reverse=True)
@@ -121,6 +122,7 @@ class Agglomerative(BaseCluster):
         results = []
         distance_threshold_range = params_range["distance_threshold"]
         distance_threshold = distance_threshold_range[0]
+        step = distance_threshold_range[2]
         while distance_threshold < distance_threshold_range[1]:
             labels = self.obj(
                 distance_threshold=distance_threshold,
@@ -133,7 +135,7 @@ class Agglomerative(BaseCluster):
                 results.append(
                     (metric_value, {"distance_threshold": distance_threshold})
                 )
-            distance_threshold += 0.05
+            distance_threshold += step
 
         if sort:
             return sorted(results, key=lambda x: x[0], reverse=True)
