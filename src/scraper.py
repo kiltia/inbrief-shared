@@ -5,8 +5,7 @@ from concurrent.futures._base import TimeoutError
 from datetime import datetime
 from typing import List
 
-from embedders import EmbeddingProvider, OpenAiEmbedder, get_embedders
-from telethon import TelegramClient
+from embedders import OpenAiEmbedder, get_embedders
 from telethon.errors.rpcbaseerrors import BadRequestError
 from telethon.errors.rpcerrorlist import MsgIdInvalidError
 from telethon.tl.functions.channels import GetFullChannelRequest
@@ -20,13 +19,14 @@ logger = logging.getLogger("app")
 
 def get_worker(
     channel_entity,
-    client: TelegramClient,
-    openai_client,
-    embedders: List[EmbeddingProvider],
-    classifier,
+    ctx,
+    embedders,
     social: bool,
     **kwargs,
 ):
+    client = ctx.client
+    classifier = ctx.classifier
+
     async def get_content(message) -> Source | None:
         if message.message in ["", None]:
             return None
@@ -82,7 +82,9 @@ def get_worker(
         for emb in embedders:
             if isinstance(emb, OpenAiEmbedder):
                 embeddings = (
-                    await emb.aget_embeddings([message.message], openai_client)
+                    await emb.aget_embeddings(
+                        [message.message], ctx.openai_client
+                    )
                 )[0]
             else:
                 embeddings = emb.get_embeddings([message.message])[0]
@@ -108,10 +110,8 @@ def get_worker(
 
 async def get_content_from_channel(
     channel_entity,
-    client: TelegramClient,
-    openai_client,
-    embedders: List[EmbeddingProvider],
-    classifier,
+    ctx,
+    embedders,
     end_date,
     offset_date=None,
     **kwargs,
@@ -121,12 +121,10 @@ async def get_content_from_channel(
     offset_date = (
         datetime.strptime(offset_date, DATE_FORMAT) if offset_date else None
     )
-    api_iterator = client.iter_messages(
+    api_iterator = ctx.client.iter_messages(
         channel_entity, offset_date=offset_date
     )
-    get_content = get_worker(
-        channel_entity, client, openai_client, embedders, classifier, **kwargs
-    )
+    get_content = get_worker(channel_entity, ctx, embedders, **kwargs)
     async for message in api_iterator:
         try:
             if message.date.replace(tzinfo=None) < end_date:
@@ -177,9 +175,7 @@ async def parse_channels(
     logger.debug("Getting all required embedders")
 
     client = ctx.client
-    openai_client = ctx.openai_client
     embedders = get_embedders(required_embedders)
-    classifier = ctx.classifier
     result: List[Source] = []
     for channel_id in channels:
         channel_entity = await client.get_entity(channel_id)
@@ -196,10 +192,8 @@ async def parse_channels(
         )
         response = await get_content_from_channel(
             channel_entity,
-            client,
-            openai_client,
+            ctx,
             embedders,
-            classifier,
             **parse_args,
         )
         result = result + response
