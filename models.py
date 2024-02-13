@@ -135,17 +135,16 @@ class SyncRequest(BaseRequest):
 # Linker API
 
 
-class LinkingScorers(str, Enum):
+class LinkingScorer(str, Enum):
     SILHOUETTE = "silhouette"
     CALINSKI_HARABASZ = "calinski_harabasz"
     WEIGHTED_METRICS = "weighted_metrics"
 
 
-class DistancesMetrics(str, Enum):
+class DistancesMetric(str, Enum):
     CITYBLOCK = "cityblock"
     COSINE = "cosine"
     EUCLIDEAN = "euclidean"
-    HAVERSINE = "haversine"
 
 
 class Entry(BaseModel):
@@ -174,8 +173,8 @@ class PlotData(BaseModel):
 
 
 class LinkingConfig(BaseRequest):
-    scorer: LinkingScorers = LinkingScorers.SILHOUETTE
-    metric: DistancesMetrics = DistancesMetrics.EUCLIDEAN
+    scorer: LinkingScorer = LinkingScorer.SILHOUETTE
+    metric: DistancesMetric = DistancesMetric.EUCLIDEAN
     embedding_source: EmbeddingSource = EmbeddingSource.OPENAI
     method: ClusteringMethod
 
