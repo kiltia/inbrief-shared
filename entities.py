@@ -69,7 +69,6 @@ class StorySources(Entity):
     date: str
     reference: str
     embeddings: str
-    title: str | None = None
 
     _table_name: ClassVar[str] = "story_sources"
 
