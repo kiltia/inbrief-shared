@@ -4,8 +4,9 @@ import metrics
 import numpy as np
 from clustering import get_clustering_method
 from sklearn.decomposition import PCA
+from utils import normalize
 
-from shared.models import EmbeddingSource
+from shared.models import EmbeddingSource, LinkingScorer
 
 
 class Matcher:
@@ -14,7 +15,7 @@ class Matcher:
     ):
         self.entities = entities
         self.embedding_source = embedding_source
-        self.scorer = getattr(metrics, scorer)
+        self.scorer = scorer
         self.metric = metric
 
     def get_stories(
@@ -51,9 +52,31 @@ class Matcher:
             )
 
         method = get_clustering_method(method_name.value)(immutable_config)
-        ranked_entries = method.fine_tune(
-            embeddings, self.scorer, self.metric, params_range, sort=True
-        )
+        scorer = getattr(metrics, self.scorer)
+        if self.scorer == LinkingScorer.WEIGHTED_METRICS:
+            ranked_entries = method.fine_tune(
+                embeddings, scorer, self.metric, params_range, sort=False
+            )
+            calinski_harabasz = normalize(
+                np.array([i[0][0] for i in ranked_entries])
+            )
+            silhouette = normalize(np.array([i[0][1] for i in ranked_entries]))
+            scores = list(zip(calinski_harabasz, silhouette, strict=False))
+            for i in range(len(scores)):
+                ranked_entries[i] = (
+                    2
+                    * scores[i][0]
+                    * scores[i][1]
+                    / (scores[i][0] + scores[i][1]),
+                    ranked_entries[i][1],
+                )
+            ranked_entries = sorted(
+                ranked_entries, key=lambda x: x[0], reverse=True
+            )
+        else:
+            ranked_entries = method.fine_tune(
+                embeddings, scorer, self.metric, params_range, sort=True
+            )
 
         results = []
         if return_plot_data:

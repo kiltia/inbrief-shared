@@ -9,7 +9,7 @@ def silhouette(X, labels, metric="cityblock"):
     try:
         return silhouette_score(X, labels_copy, metric=metric)
     except ValueError:
-        return np.nan
+        return None
 
 
 def calinski_harabasz(X, labels, **kwargs):
@@ -17,23 +17,23 @@ def calinski_harabasz(X, labels, **kwargs):
     try:
         return calinski_harabasz_score(X, labels_copy)
     except ValueError:
-        return np.nan
+        return None
 
 
 def weighted_metrics(X, labels, metric):
     labels_copy = noises_to_single_cluster(labels)
     try:
-        return 0.01 * calinski_harabasz_score(
-            X, labels_copy
-        ) + silhouette_score(X, labels_copy, metric=metric)
+        return calinski_harabasz_score(X, labels_copy), silhouette_score(
+            X, labels_copy, metric=metric
+        )
     except ValueError:
-        return np.nan
+        return None
 
 
 def business_metric(X, labels, metric=None):
     validity = (validity_index(X, labels, metric=metric) + 1) / 2
     if np.isnan(validity) or max(labels) == -1:
-        return np.nan
+        return None
     n_noise = len(labels[labels == -1])
     noise_penalty = 1 - n_noise / len(labels)
     normalized_num_clusters = (max(labels) + 1) / len(labels)

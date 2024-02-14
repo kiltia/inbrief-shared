@@ -59,7 +59,7 @@ class OPTICS(BaseCluster):
                     eps += step
                     continue
                 metric_value = scorer(X, labels, metric=metric)
-                if not np.isnan(metric_value):
+                if metric_value is not None:
                     results.append(
                         (metric_value, {"min_samples": i, "max_eps": eps})
                     )
@@ -84,7 +84,7 @@ class HDBSCAN(BaseCluster):
             if len(np.unique(labels)) == 1:
                 continue
             metric_value = scorer(X, labels, metric=metric)
-            if not np.isnan(metric_value):
+            if metric_value is not None:
                 results.append((metric_value, {"min_cluster_size": i}))
 
         if sort:
@@ -106,7 +106,7 @@ class KMeans(BaseCluster):
                 n_clusters=n_clusters, **self.immutable_config
             ).fit_predict(X)
             metric_value = scorer(X, labels, metric=metric)
-            if not np.isnan(metric_value):
+            if metric_value is not None:
                 results.append((metric_value, {"n_clusters": n_clusters}))
 
         if sort:
@@ -131,7 +131,7 @@ class Agglomerative(BaseCluster):
             if len(np.unique(labels)) == 1:
                 break
             metric_value = scorer(X, labels, metric=metric)
-            if not np.isnan(metric_value):
+            if metric_value is not None:
                 results.append(
                     (metric_value, {"distance_threshold": distance_threshold})
                 )
@@ -157,7 +157,7 @@ class Spectral(BaseCluster):
                 **self.immutable_config,
             ).fit_predict(X)
             metric_value = scorer(X, labels, metric=metric)
-            if not np.isnan(metric_value):
+            if metric_value is not None:
                 results.append((metric_value, {"n_clusters": n_clusters}))
 
         if sort:
