@@ -46,7 +46,9 @@ class Matcher:
         embeddings = np.array(embeddings)
 
         if n_components is not None and n_components < len(embeddings):
-            embeddings = PCA(n_components).fit_transform(embeddings)
+            embeddings = PCA(n_components, svd_solver="full").fit_transform(
+                embeddings
+            )
 
         method = get_clustering_method(method_name.value)(immutable_config)
         ranked_entries = method.fine_tune(
