@@ -76,6 +76,7 @@ class StorySources(Entity):
 class Story(Entity):
     story_id: UUID
     request_id: UUID
+    category_id: UUID
 
     _table_name: ClassVar[str] = "story"
     _pk: ClassVar[str] = "story_id"
@@ -121,7 +122,8 @@ class UserPresets(Entity):
 class Config(Entity):
     config_id: int
     embedding_source: str
-    linking_method: str
+    first_method: str
+    second_method: str | None
     summary_method: str
     editor_model: str
     inactive: bool
