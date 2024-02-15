@@ -122,7 +122,7 @@ class UserPresets(Entity):
 class Config(Entity):
     config_id: int
     embedding_source: str
-    first_method: str
+    linking_method: str
     second_method: str | None
     summary_method: str
     editor_model: str
