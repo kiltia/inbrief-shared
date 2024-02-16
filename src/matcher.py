@@ -1,4 +1,5 @@
 import json
+import logging
 
 import metrics
 import numpy as np
@@ -7,6 +8,8 @@ from sklearn.decomposition import PCA
 from utils import normalize
 
 from shared.models import EmbeddingSource, LinkingScorer
+
+logger = logging.getLogger("app")
 
 
 class Matcher:
@@ -46,13 +49,19 @@ class Matcher:
 
         embeddings = np.array(embeddings)
 
+        method = get_clustering_method(method_name.value)(immutable_config)
+        scorer = getattr(metrics, self.scorer)
+
         if n_components is not None and n_components < len(embeddings):
             embeddings = PCA(n_components, svd_solver="full").fit_transform(
                 embeddings
             )
 
-        method = get_clustering_method(method_name.value)(immutable_config)
-        scorer = getattr(metrics, self.scorer)
+        if not method.can_be_clustered(embeddings, params_range):
+            return [
+                {"stories_nums": [[i for i in range(len(embeddings))], []]}
+            ], embeddings
+
         if self.scorer == LinkingScorer.WEIGHTED_METRICS:
             ranked_entries = method.fine_tune(
                 embeddings, scorer, self.metric, params_range, sort=False
@@ -96,7 +105,7 @@ class Matcher:
             results.append(
                 {
                     "metadata": {
-                        "value": ranked_entries[0][0],
+                        "score": ranked_entries[0][0],
                         "config": ranked_entries[0][1],
                     },
                     "stories_nums": stories_nums,

@@ -1,21 +1,31 @@
 import logging
+from contextlib import asynccontextmanager
 
 from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import FastAPI
 from matcher import Matcher
+from pydantic import TypeAdapter
 
-from shared.models import LinkingRequest
+from shared.logger import configure_logging
+from shared.models import LinkingRequest, LinkingResponse
 from shared.routes import LinkerRoutes
 
 app = FastAPI()
 app.add_middleware(CorrelationIdMiddleware, validator=None)
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    configure_logging()
+    yield
+
+
 logger = logging.getLogger("app")
 
 
 @app.post(LinkerRoutes.GET_STORIES)
-async def get_stories(request: LinkingRequest):
+async def get_stories(request: LinkingRequest) -> LinkingResponse:
+    logger.info(f"Method: {request.config.method}")
     matcher = Matcher(
         request.entries,
         request.config.embedding_source,
@@ -29,10 +39,13 @@ async def get_stories(request: LinkingRequest):
         return_plot_data=request.return_plot_data,
     )
 
+    adapter = TypeAdapter(LinkingResponse)
     if request.return_plot_data:
-        return {"results": results, "embeddings": embeddings.tolist()}
+        return adapter.validate_python(
+            {"results": results, "embeddings": embeddings.tolist()}
+        )
     else:
-        return {"results": results}
+        return adapter.validate_python({"results": results})
 
 
 @app.get("/")

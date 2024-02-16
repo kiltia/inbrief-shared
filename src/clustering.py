@@ -96,6 +96,9 @@ class KMeans(BaseCluster):
     def __init__(self, immutable_config):
         super().__init__(cls.KMeans, immutable_config)
 
+    def can_be_clustered(self, X, params_range):
+        return len(X) > params_range["n_clusters"][0]
+
     def fine_tune(self, X, scorer, metric, params_range, sort=False):
         results = []
         n_clusters_range = params_range["n_clusters"]
