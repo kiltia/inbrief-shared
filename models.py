@@ -61,8 +61,8 @@ class ClusteringMethod(str, Enum):
 
 
 @extend_enum(ClusteringMethod)
-class LinkingMethod(str, Enum):
-    NO_LINKER = "no_linker"
+class CategoryMethod(str, Enum):
+    CLASSIFIER = "classifier"
 
 
 class OpenAIModels(str, Enum):
@@ -105,7 +105,8 @@ class Density(str, Enum):
 
 class Config(BaseModel):
     embedding_source: EmbeddingSource
-    linking_method: LinkingMethod
+    linking_method: ClusteringMethod
+    category_method: CategoryMethod
     summary_method: SummaryMethod
 
 
@@ -156,19 +157,19 @@ StoriesNums = list[list[int]]
 Embeddings = list[list[float]]
 
 
-class PlotMetadata(BaseModel):
+class ClusteringMetadata(BaseModel):
     score: float
     config: dict
 
 
-class PlotEntry(BaseModel):
-    metadata: PlotMetadata
+class ClusteringEntry(BaseModel):
+    metadata: ClusteringMetadata | None = None
     stories_nums: StoriesNums
 
 
 class PlotData(BaseModel):
     payload: list[StorySources]
-    results: list[PlotEntry]
+    results: list[ClusteringEntry]
     embeddings: Embeddings
 
 
@@ -184,6 +185,11 @@ class LinkingRequest(BaseRequest):
     config: LinkingConfig
     settings: dict
     return_plot_data: bool = False
+
+
+class LinkingResponse(BaseModel):
+    results: list[ClusteringEntry]
+    embeddings: Embeddings | None = None
 
 
 # Summarizer API
@@ -222,16 +228,22 @@ class FetchRequest(ExternalRequest):
     config_id: int | None = None
 
 
+class FetchResponse(BaseModel):
+    config_id: int
+    categories: dict[UUID, list[UUID]]
+
+
 class CallbackPostRequest(BaseRequest):
     callback_data: dict
 
 
 class ConfigPostRequest(BaseRequest):
     config_id: int
-    embedding_source: str
-    linking_method: str
-    summary_method: str
-    editor_model: str
+    embedding_source: EmbeddingSource
+    linking_method: ClusteringMethod
+    category_method: CategoryMethod
+    summary_method: OpenAIModels
+    editor_model: OpenAIModels
 
 
 class CallbackPatchRequest(BaseRequest):

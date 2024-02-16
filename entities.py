@@ -123,7 +123,7 @@ class Config(Entity):
     config_id: int
     embedding_source: str
     linking_method: str
-    categorize_method: str | None
+    categorize_method: str
     summary_method: str
     editor_model: str
     inactive: bool
