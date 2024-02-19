@@ -139,7 +139,7 @@ class SyncRequest(BaseRequest):
 class LinkingScorer(str, Enum):
     SILHOUETTE = "silhouette"
     CALINSKI_HARABASZ = "calinski_harabasz"
-    WEIGHTED_METRICS = "weighted_metrics"
+    WEIGHTED_SCORER = "weighted_scorer"
 
 
 class DistancesMetric(str, Enum):
