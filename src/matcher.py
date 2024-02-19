@@ -57,11 +57,6 @@ class Matcher:
                 embeddings
             )
 
-        if not method.can_be_clustered(embeddings, params_range):
-            return [
-                {"stories_nums": [[i for i in range(len(embeddings))], []]}
-            ], embeddings
-
         if self.scorer == LinkingScorer.WEIGHTED_METRICS:
             ranked_entries = method.fine_tune(
                 embeddings, scorer, self.metric, params_range, sort=False
@@ -101,6 +96,11 @@ class Matcher:
                     }
                 )
         else:
+            if not ranked_entries:
+                return [
+                    {"stories_nums": [[0 for _ in range(len(embeddings))]]}
+                ], embeddings
+
             stories_nums = method.fit(embeddings, ranked_entries[0][1])
             results.append(
                 {
