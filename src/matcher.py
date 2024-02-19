@@ -21,7 +21,7 @@ class Matcher:
         self.scorer = scorer
         self.metric = metric
 
-    def retrieve_embeddings(self):
+    def _retrieve_embeddings(self):
         embs = list(map(lambda x: json.loads(x.embeddings), self.entities))
         embs = {k: [entity[k] for entity in embs] for k in embs[0]}
         match self.embedding_source:
