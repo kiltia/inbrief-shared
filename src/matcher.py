@@ -4,8 +4,8 @@ import logging
 import metrics
 import numpy as np
 from clustering import get_clustering_method
+from metrics import apply_weighted_scorer
 from sklearn.decomposition import PCA
-from utils import normalize
 
 from shared.models import EmbeddingSource, LinkingScorer
 
@@ -21,15 +21,7 @@ class Matcher:
         self.scorer = scorer
         self.metric = metric
 
-    def get_stories(
-        self,
-        method_name,
-        params_range,
-        immutable_config,
-        *,
-        n_components=None,
-        return_plot_data=False,
-    ):
+    def retrieve_embeddings(self):
         embs = list(map(lambda x: json.loads(x.embeddings), self.entities))
         embs = {k: [entity[k] for entity in embs] for k in embs[0]}
         match self.embedding_source:
@@ -47,8 +39,28 @@ class Matcher:
             case EmbeddingSource.MLM:
                 embeddings = embs["mini-lm-embedder"]
 
-        embeddings = np.array(embeddings)
+        return np.array(embeddings)
 
+    def _form_entry(method, embeddings, entry):
+        stories_nums = method.fit(embeddings, entry[1])
+        return {
+            "metadata": {
+                "score": entry[0],
+                "config": entry[1],
+            },
+            "stories_nums": stories_nums,
+        }
+
+    def get_stories(
+        self,
+        method_name,
+        params_range,
+        immutable_config,
+        *,
+        n_components=None,
+        return_plot_data=False,
+    ):
+        embeddings = self.retrieve_embeddings()
         method = get_clustering_method(method_name.value)(immutable_config)
         scorer = getattr(metrics, self.scorer)
 
@@ -57,25 +69,9 @@ class Matcher:
                 embeddings
             )
 
-        if self.scorer == LinkingScorer.WEIGHTED_METRICS:
-            ranked_entries = method.fine_tune(
-                embeddings, scorer, self.metric, params_range, sort=False
-            )
-            calinski_harabasz = normalize(
-                np.array([i[0][0] for i in ranked_entries])
-            )
-            silhouette = normalize(np.array([i[0][1] for i in ranked_entries]))
-            scores = list(zip(calinski_harabasz, silhouette, strict=False))
-            for i in range(len(scores)):
-                ranked_entries[i] = (
-                    2
-                    * scores[i][0]
-                    * scores[i][1]
-                    / (scores[i][0] + scores[i][1]),
-                    ranked_entries[i][1],
-                )
-            ranked_entries = sorted(
-                ranked_entries, key=lambda x: x[0], reverse=True
+        if self.scorer == LinkingScorer.WEIGHTED_SCORER:
+            ranked_entries = apply_weighted_scorer(
+                method, scorer, params_range
             )
         else:
             ranked_entries = method.fine_tune(
@@ -85,15 +81,8 @@ class Matcher:
         results = []
         if return_plot_data:
             for rank_entry in ranked_entries:
-                stories_nums = method.fit(embeddings, rank_entry[1])
                 results.append(
-                    {
-                        "metadata": {
-                            "score": rank_entry[0],
-                            "config": rank_entry[1],
-                        },
-                        "stories_nums": stories_nums,
-                    }
+                    Matcher._form_entry(method, embeddings, rank_entry)
                 )
         else:
             if not ranked_entries:
@@ -101,15 +90,8 @@ class Matcher:
                     {"stories_nums": [[0 for _ in range(len(embeddings))]]}
                 ], embeddings
 
-            stories_nums = method.fit(embeddings, ranked_entries[0][1])
             results.append(
-                {
-                    "metadata": {
-                        "score": ranked_entries[0][0],
-                        "config": ranked_entries[0][1],
-                    },
-                    "stories_nums": stories_nums,
-                }
+                Matcher._form_entry(method, embeddings, ranked_entries[0])
             )
 
         return results, embeddings

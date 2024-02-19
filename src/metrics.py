@@ -53,3 +53,18 @@ def business_metric(X, labels, metric=None):
         + 1 / normalized_num_clusters
         + 1 / clusters_size_penalty
     )
+
+
+def apply_weighted_scorer(embeddings, method, scorer, params_range, metric):
+    ranked_entries = method.fine_tune(
+        embeddings, scorer, metric, params_range, sort=False
+    )
+    calinski_harabasz = normalize(np.array([i[0][0] for i in ranked_entries]))
+    silhouette = normalize(np.array([i[0][1] for i in ranked_entries]))
+    scores = list(zip(calinski_harabasz, silhouette, strict=False))
+    for i in range(len(scores)):
+        ranked_entries[i] = (
+            2 * scores[i][0] * scores[i][1] / (scores[i][0] + scores[i][1]),
+            ranked_entries[i][1],
+        )
+    return sorted(ranked_entries, key=lambda x: x[0], reverse=True)
