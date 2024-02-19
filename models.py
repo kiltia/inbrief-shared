@@ -228,9 +228,19 @@ class FetchRequest(ExternalRequest):
     config_id: int | None = None
 
 
+class StoryEntry(BaseModel):
+    uuid: UUID
+    noise: bool = False
+
+
+class CategoryEntry(BaseModel):
+    uuid: UUID
+    stories: list[StoryEntry]
+
+
 class FetchResponse(BaseModel):
     config_id: int
-    categories: dict[UUID, list[UUID]]
+    categories: list[CategoryEntry]
 
 
 class CallbackPostRequest(BaseRequest):
