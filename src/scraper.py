@@ -3,11 +3,11 @@ import json
 import logging
 from concurrent.futures._base import TimeoutError
 from datetime import datetime
-from typing import List
+from typing import List, Tuple
 
 from embedders import OpenAiEmbedder, get_embedders
 from telethon.errors.rpcbaseerrors import BadRequestError
-from telethon.errors.rpcerrorlist import MsgIdInvalidError
+from telethon.errors.rpcerrorlist import ChannelPrivateError, MsgIdInvalidError
 from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.functions.chatlists import CheckChatlistInviteRequest
 
@@ -171,16 +171,25 @@ async def parse_channels(
     channels: List[int],
     required_embedders: List[str],
     **parse_args,
-) -> List[Source]:
+) -> Tuple[List[Source], List[int]]:
     logger.debug("Getting all required embedders")
 
     client = ctx.client
     embedders = get_embedders(required_embedders)
     result: List[Source] = []
+    skipped_channel_ids: List[int] = []
     for channel_id in channels:
-        channel_entity = await client.get_entity(channel_id)
-        logger.debug(f"Parsing channel: {channel_entity.id}")
+        try:
+            channel_entity = await client.get_entity(channel_id)
+        except ChannelPrivateError:
+            logger.debug(f"The channel {channel_id} appears to be private, "
+                         f"and we aren't allowed to access it, skipping.")
+            skipped_channel_ids.append(channel_id)
+            continue
+
         info = (await client(GetFullChannelRequest(channel_id))).full_chat
+        logger.debug(f"Parsing channel: {channel_entity.id}")
+
         channel = Channel(
             channel_id=info.id,
             title=channel_entity.title,
@@ -198,4 +207,4 @@ async def parse_channels(
         )
         result = result + response
 
-    return result
+    return result, skipped_channel_ids

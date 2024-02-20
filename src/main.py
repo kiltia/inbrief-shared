@@ -1,7 +1,6 @@
 import logging
 import os
 from contextlib import asynccontextmanager
-from typing import List
 
 from asgi_correlation_id import CorrelationIdMiddleware
 from classifiers import get_classifier
@@ -17,7 +16,7 @@ from scraper import parse_channels, retrieve_channels
 from shared.db import PgRepository, create_db_string
 from shared.entities import Channel, Folder, Source
 from shared.logger import configure_logging
-from shared.models import ParseRequest
+from shared.models import ParseRequest, ParseResponse
 from shared.resources import SharedResources
 from shared.routes import ScraperRoutes
 from shared.utils import SHARED_CONFIG_PATH
@@ -73,9 +72,9 @@ ctx = Context()
 
 
 @app.post(ScraperRoutes.PARSE)
-async def parse(request: ParseRequest, response: Response) -> List[Source]:
+async def parse(request: ParseRequest, response: Response) -> ParseResponse:
     logger.info("Started serving scrapping request")
-    entities = await parse_channels(ctx, **request.model_dump())
+    entities, skipped_channel_ids = await parse_channels(ctx, **request.model_dump())
     # TODO(nrydanov): Need to add caching there in case all posts for required
     # time period are already stored in database (#137)
     if entities:
@@ -83,7 +82,10 @@ async def parse(request: ParseRequest, response: Response) -> List[Source]:
         logger.debug("Data was saved to database successfully")
     else:
         response.status_code = status.HTTP_204_NO_CONTENT
-    return entities
+    return ParseResponse(
+        sources=entities,
+        skipped_channel_ids=skipped_channel_ids,
+    )
 
 
 @app.get(ScraperRoutes.SYNC)
