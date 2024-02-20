@@ -60,7 +60,7 @@ class Matcher:
         n_components=None,
         return_plot_data=False,
     ):
-        embeddings = self.retrieve_embeddings()
+        embeddings = self._retrieve_embeddings()
         method = get_clustering_method(method_name.value)(immutable_config)
         scorer = getattr(metrics, self.scorer)
 
@@ -87,7 +87,7 @@ class Matcher:
         else:
             if not ranked_entries:
                 return [
-                    {"stories_nums": [[0 for _ in range(len(embeddings))]]}
+                    {"stories_nums": [[i for i in range(len(embeddings))]]}
                 ], embeddings
 
             results.append(
