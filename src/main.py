@@ -10,9 +10,6 @@ from shared.logger import configure_logging
 from shared.models import LinkingRequest, LinkingResponse
 from shared.routes import LinkerRoutes
 
-app = FastAPI()
-app.add_middleware(CorrelationIdMiddleware, validator=None)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,6 +18,9 @@ async def lifespan(app: FastAPI):
 
 
 logger = logging.getLogger("app")
+
+app = FastAPI(lifespan=lifespan)
+app.add_middleware(CorrelationIdMiddleware, validator=None)
 
 
 @app.post(LinkerRoutes.GET_STORIES)

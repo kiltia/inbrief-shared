@@ -20,7 +20,7 @@ def calinski_harabasz(X, labels, **kwargs):
         return None
 
 
-def weighted_metrics(X, labels, metric):
+def weighted_scorer(X, labels, metric):
     labels_copy = noises_to_single_cluster(labels)
     try:
         return calinski_harabasz_score(X, labels_copy), silhouette_score(
