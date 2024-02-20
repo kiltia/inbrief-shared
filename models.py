@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from shared.entities import StorySources
+from shared.entities import Source, StorySources
 
 
 class JSONSettings(BaseModel):
@@ -113,6 +113,10 @@ class BaseRequest(BaseModel):
     pass
 
 
+class BaseResponse(BaseModel):
+    pass
+
+
 class ExternalRequest(BaseRequest):
     chat_id: int
 
@@ -126,6 +130,11 @@ class ParseRequest(BaseRequest):
     offset_date: str | None = None
     end_date: str
     social: bool = False
+
+
+class ParseResponse(BaseResponse):
+    sources: List[Source]
+    skipped_channel_ids: List[int]
 
 
 class SyncRequest(BaseRequest):
