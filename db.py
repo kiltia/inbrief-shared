@@ -50,13 +50,17 @@ class AbstractRepository:
 
     async def update(self, entity, fields: List[str]):
         dump = entity.model_dump()
+        query_set = [f"{field} = :{field}" for field in fields]
 
         pk = entity._pk
-        query_set = [f"{field} = :{field}" for field in fields]
-        query = f"UPDATE {self._table_name} SET {','.join(query_set)} WHERE {pk} = :{pk}"
+        if not isinstance(pk, tuple):
+            pk = (pk,)
+
+        where_clause = " AND ".join(f"{key} = :{key}" for key in pk)
+        query = f"UPDATE {self._table_name} SET {','.join(query_set)} WHERE {where_clause}"
         logger.debug(f"Executing query: {query}")
         await self._db.execute(
-            query=query, values={k: dump[k] for k in fields} | {pk: dump[pk]}
+            query=query, values={k: dump[k] for k in fields} | {key: dump[key] for key in pk}
         )
 
     async def get(self, field=None, value=None) -> List:

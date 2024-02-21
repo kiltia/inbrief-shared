@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import ClassVar, List
+from typing import ClassVar, List, Tuple
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -138,10 +138,11 @@ class Summary(Entity):
     title: str
     density: str
     config_id: int
-    feedback: int | None = None
+    feedback: str | None = None
     date_created: str
 
     _table_name: ClassVar[str] = "summary"
+    _pk: ClassVar[Tuple[str, str]] = ("summary_id", "density")
 
 
 class Callback(Entity):

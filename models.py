@@ -103,6 +103,15 @@ class Density(str, Enum):
         return members[index]
 
 
+class UserFeedbackValue(str, Enum):
+    LIKE = "like"
+    BAD_LINKAGE = "bad_linkage"
+    LEXICAL_OR_GRAMMAR_ERRORS = "errors"
+    FAKE_NEWS = "fake_news"
+    SUMMARY_TOO_SHORT = "too_short"
+    SUMMARY_TOO_LONG = "too_long"
+
+
 class Config(BaseModel):
     embedding_source: EmbeddingSource
     linking_method: LinkingMethod
@@ -262,3 +271,9 @@ class PartialPresetUpdate(ExternalRequest):
     chat_folder_link: str | None = None
     editor_prompt: str | None = None
     inactive: bool | None = None
+
+
+class UserFeedbackRequest(BaseRequest):
+    summary_id: UUID
+    density: Density
+    feedback: UserFeedbackValue | None = None
