@@ -6,7 +6,8 @@ from asgi_correlation_id import CorrelationIdMiddleware
 from classifiers import get_classifier
 from databases import Database
 from embedders import init_embedders
-from fastapi import FastAPI, Response, status
+from fastapi import FastAPI, status
+from fastapi.responses import JSONResponse
 from telethon import TelegramClient
 from utils import SESSION_PATH
 
@@ -72,7 +73,7 @@ ctx = Context()
 
 
 @app.post(ScraperRoutes.PARSE)
-async def parse(request: ParseRequest, response: Response) -> ParseResponse:
+async def parse(request: ParseRequest) -> ParseResponse:
     logger.info("Started serving scrapping request")
     entities, skipped_channel_ids = await parse_channels(
         ctx, **request.model_dump()
@@ -82,12 +83,12 @@ async def parse(request: ParseRequest, response: Response) -> ParseResponse:
     if entities:
         await ctx.source_repository.add(entities, ignore_conflict=True)
         logger.debug("Data was saved to database successfully")
+        return ParseResponse(
+            sources=entities,
+            skipped_channel_ids=skipped_channel_ids,
+        )
     else:
-        response.status_code = status.HTTP_204_NO_CONTENT
-    return ParseResponse(
-        sources=entities,
-        skipped_channel_ids=skipped_channel_ids,
-    )
+        return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.get(ScraperRoutes.SYNC)
