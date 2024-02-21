@@ -30,10 +30,6 @@ class BaseCluster:
         return clusters
 
     @classmethod
-    def link_text(self, clusters, texts):
-        return list(map(lambda x: list(map(lambda y: texts[y], x)), clusters))
-
-    @classmethod
     def get_label(self):
         return self.__name__.lower()
 

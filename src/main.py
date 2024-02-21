@@ -52,6 +52,7 @@ ctx = Context()
 
 @app.post(LinkerRoutes.GET_STORIES)
 async def get_stories(request: LinkingRequest):
+    logger.info("Started serving linker request")
     matcher = Matcher(
         request.entries,
         request.config.embedding_source,
