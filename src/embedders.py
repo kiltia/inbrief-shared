@@ -11,7 +11,7 @@ from transformers import AutoModel, AutoTokenizer
 import openai_api
 from shared.utils import CACHE_PATH, clean_text
 
-logger = logging.getLogger("app")
+logger = logging.getLogger("scraper")
 
 
 class EmbeddingProvider:

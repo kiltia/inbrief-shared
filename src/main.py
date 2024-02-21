@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
     await ctx.dispose_db()
 
 
-logger = logging.getLogger("app")
+logger = logging.getLogger("scraper")
 
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(CorrelationIdMiddleware, validator=None)
@@ -74,7 +74,9 @@ ctx = Context()
 @app.post(ScraperRoutes.PARSE)
 async def parse(request: ParseRequest, response: Response) -> ParseResponse:
     logger.info("Started serving scrapping request")
-    entities, skipped_channel_ids = await parse_channels(ctx, **request.model_dump())
+    entities, skipped_channel_ids = await parse_channels(
+        ctx, **request.model_dump()
+    )
     # TODO(nrydanov): Need to add caching there in case all posts for required
     # time period are already stored in database (#137)
     if entities:

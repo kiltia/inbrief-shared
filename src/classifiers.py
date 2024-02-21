@@ -8,7 +8,7 @@ from utils import CLASSES_NAMES
 
 from shared.utils import CACHE_PATH
 
-logger = logging.getLogger("app")
+logger = logging.getLogger("scraper")
 
 
 class Classifier:

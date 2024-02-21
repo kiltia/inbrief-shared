@@ -14,7 +14,7 @@ from telethon.tl.functions.chatlists import CheckChatlistInviteRequest
 from shared.entities import Channel, Folder, Source
 from shared.utils import DATE_FORMAT, DB_DATE_FORMAT
 
-logger = logging.getLogger("app")
+logger = logging.getLogger("scraper")
 
 
 def get_worker(
@@ -182,8 +182,10 @@ async def parse_channels(
         try:
             channel_entity = await client.get_entity(channel_id)
         except ChannelPrivateError:
-            logger.debug(f"The channel {channel_id} appears to be private, "
-                         f"and we aren't allowed to access it, skipping.")
+            logger.debug(
+                f"The channel {channel_id} appears to be private, "
+                f"and we aren't allowed to access it, skipping."
+            )
             skipped_channel_ids.append(channel_id)
             continue
 
