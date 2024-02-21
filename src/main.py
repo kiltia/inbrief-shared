@@ -27,7 +27,7 @@ app = FastAPI(lifespan=lifespan)
 app.add_middleware(CorrelationIdMiddleware, validator=None)
 
 
-logger = logging.getLogger("app")
+logger = logging.getLogger("linker")
 
 
 class Context:
