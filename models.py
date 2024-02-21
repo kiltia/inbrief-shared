@@ -221,6 +221,11 @@ class SummarizeRequest(ExternalRequest):
     required_density: List[Density]
 
 
+class CategoryTitleRequest(ExternalRequest):
+    config_id: int
+    texts: List[str]
+
+
 class FetchRequest(ExternalRequest):
     end_date: str
     offset_date: str | None = None

@@ -11,6 +11,7 @@ class LinkerRoutes:
 class SupervisorRoutes:
     SUMMARY = "/api/summary"
     SUMMARIZE = "/api/summarize"
+    CATEGORY_TITLE = "/api/category_title"
     FETCH = "/api/fetch"
     USER = "/api/user"
     PRESET = "/api/preset"
