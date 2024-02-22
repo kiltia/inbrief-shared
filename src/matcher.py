@@ -87,7 +87,7 @@ class Matcher:
         else:
             if not ranked_entries:
                 return [
-                    {"stories_nums": [[i for i in range(len(embeddings))]]}
+                    {"stories_nums": [[i for i in range(len(embeddings))], []]}
                 ], embeddings
 
             results.append(
