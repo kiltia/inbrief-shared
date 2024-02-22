@@ -7,7 +7,7 @@ from pydantic import BaseModel, TypeAdapter
 
 from shared.resources import DatabaseCredentials
 
-logger = logging.getLogger("app")
+logger = logging.getLogger("databases")
 
 
 class Entity(BaseModel):
@@ -60,7 +60,9 @@ class AbstractRepository:
         query = f"UPDATE {self._table_name} SET {','.join(query_set)} WHERE {where_clause}"
         logger.debug(f"Executing query: {query}")
         await self._db.execute(
-            query=query, values={k: dump[k] for k in fields} | {key: dump[key] for key in pk}
+            query=query,
+            values={k: dump[k] for k in fields}
+            | {key: dump[key] for key in pk},
         )
 
     async def get(self, field=None, value=None) -> List:
