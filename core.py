@@ -21,7 +21,7 @@ from openai_api.prompts import (
 
 from .utils import count_tokens
 
-logger = logging.getLogger("app")
+logger = logging.getLogger("openai")
 
 
 base_retry = retry(
