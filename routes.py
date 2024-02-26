@@ -24,6 +24,7 @@ class SupervisorRoutes:
 
 class SummarizerRoutes:
     SUMMARIZE = "/summarize"
+    CATEGORIZE = "/categorize"
 
 
 class EditorRoutes:

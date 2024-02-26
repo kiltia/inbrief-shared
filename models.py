@@ -82,6 +82,7 @@ class SummaryMethod(str, Enum):
 
 
 class Density(str, Enum):
+    CATEGORY = "category"
     TITLE = "title"
     SMALL = "small"
     LARGE = "large"
@@ -210,6 +211,11 @@ class SummaryRequest(BaseRequest):
     summary_method: SummaryMethod
     config: SummaryConfig
     density: Density
+
+
+class CategorizeRequest(BaseRequest):
+    story: list[str]
+    config: SummaryConfig
 
 
 # Supervisor API
