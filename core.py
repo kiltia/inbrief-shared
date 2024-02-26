@@ -14,6 +14,7 @@ from tenacity import (
 
 from openai_api.prompts import (
     CLASSIFY_TASK,
+    get_categorize_context,
     get_editor_context,
     get_summary_context,
     get_title_context,
@@ -76,6 +77,24 @@ async def aget_title(input, model, client, max_words=7):
     logger.debug(
         f"Sending title request to OpenAI with {count_tokens(messages, model)} tokens"
     )
+    response = await client.chat.completions.create(
+        model=model,
+        messages=messages,
+        timeout=30,
+    )
+
+    logger.debug(f"Got response from OpenAI: {response}")
+
+    return response.choices[0].message.content
+
+
+@base_retry
+async def aget_category(input, model, client, max_words=5):
+    messages = get_categorize_context(input, max_words)
+    logger.debug(
+        f"Sending categorize request to OpenAI with {count_tokens(messages, model)} tokens: {messages}"
+    )
+
     response = await client.chat.completions.create(
         model=model,
         messages=messages,
