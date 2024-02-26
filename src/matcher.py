@@ -71,7 +71,7 @@ class Matcher:
 
         if self.scorer == LinkingScorer.WEIGHTED_SCORER:
             ranked_entries = apply_weighted_scorer(
-                embeddings, method, scorer, params_range, scorer
+                embeddings, method, scorer, params_range, self.metric
             )
         else:
             ranked_entries = method.fine_tune(
