@@ -270,6 +270,7 @@ class CategoryEntry(BaseModel):
 class FetchResponse(BaseModel):
     config_id: int
     categories: list[CategoryEntry]
+    skipped_channel_ids: list[int]
 
 
 class CallbackPostRequest(BaseRequest):
