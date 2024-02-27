@@ -17,15 +17,16 @@ async def lifespan(app: FastAPI):
     yield
 
 
-logger = logging.getLogger("app")
-
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(CorrelationIdMiddleware, validator=None)
 
 
+logger = logging.getLogger("linker")
+
+
 @app.post(LinkerRoutes.GET_STORIES)
 async def get_stories(request: LinkingRequest) -> LinkingResponse:
-    logger.info(f"Method: {request.config.method}")
+    logger.info("Started serving linker request")
     matcher = Matcher(
         request.entries,
         request.config.embedding_source,
