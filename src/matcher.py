@@ -79,6 +79,7 @@ class Matcher:
             )
 
         results = []
+        logger.debug(ranked_entries)
         if return_plot_data:
             for rank_entry in ranked_entries:
                 results.append(
