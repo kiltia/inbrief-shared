@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from shared.entities import StorySources
+from shared.entities import Source, StorySources
 
 
 class JSONSettings(BaseModel):
@@ -104,6 +104,15 @@ class Density(str, Enum):
         return members[index]
 
 
+class UserFeedbackValue(str, Enum):
+    LIKE = "like"
+    BAD_LINKAGE = "bad_linkage"
+    LEXICAL_OR_GRAMMAR_ERRORS = "errors"
+    FAKE_NEWS = "fake_news"
+    SUMMARY_TOO_SHORT = "too_short"
+    SUMMARY_TOO_LONG = "too_long"
+
+
 class Config(BaseModel):
     embedding_source: EmbeddingSource
     linking_method: ClusteringMethod
@@ -112,6 +121,10 @@ class Config(BaseModel):
 
 
 class BaseRequest(BaseModel):
+    pass
+
+
+class BaseResponse(BaseModel):
     pass
 
 
@@ -128,6 +141,11 @@ class ParseRequest(BaseRequest):
     offset_date: str | None = None
     end_date: str
     social: bool = False
+
+
+class ParseResponse(BaseResponse):
+    sources: List[Source]
+    skipped_channel_ids: List[int]
 
 
 class SyncRequest(BaseRequest):
@@ -286,3 +304,9 @@ class PartialPresetUpdate(ExternalRequest):
     chat_folder_link: str | None = None
     editor_prompt: str | None = None
     inactive: bool | None = None
+
+
+class UserFeedbackRequest(BaseRequest):
+    summary_id: UUID
+    density: Density
+    feedback: UserFeedbackValue | None = None

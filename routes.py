@@ -20,6 +20,7 @@ class SupervisorRoutes:
     REQUEST = "/api/request"
     CONFIG = "/api/config"
     DASH = "/api/dash"
+    FEEDBACK = "/api/feedback"
 
 
 class SummarizerRoutes:
