@@ -30,7 +30,7 @@ def weighted_scorer(X, labels, metric):
         return None
 
 
-def business_metric(X, labels, metric=None):
+def business_scorer(X, labels, metric=None):
     validity = (validity_index(X, labels, metric=metric) + 1) / 2
     if np.isnan(validity) or max(labels) == -1:
         return None

@@ -9,7 +9,7 @@ from sklearn.decomposition import PCA
 
 from shared.models import EmbeddingSource, LinkingScorer
 
-logger = logging.getLogger("app")
+logger = logging.getLogger("linker")
 
 
 class Matcher:
@@ -60,6 +60,7 @@ class Matcher:
         n_components=None,
         return_plot_data=False,
     ):
+        logger.debug(f"Using immutable config: {immutable_config}")
         embeddings = self._retrieve_embeddings()
         method = get_clustering_method(method_name.value)(immutable_config)
         scorer = getattr(metrics, self.scorer)
@@ -79,6 +80,7 @@ class Matcher:
             )
 
         results = []
+        logger.debug(f"Got config ranks: {ranked_entries}")
         if return_plot_data:
             for rank_entry in ranked_entries:
                 results.append(
