@@ -159,6 +159,7 @@ class LinkingScorer(str, Enum):
     SILHOUETTE = "silhouette"
     CALINSKI_HARABASZ = "calinski_harabasz"
     WEIGHTED_SCORER = "weighted_scorer"
+    BUSINESS_SCORER = "business_scorer"
 
 
 class DistancesMetric(str, Enum):
