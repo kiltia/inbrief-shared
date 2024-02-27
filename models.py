@@ -175,7 +175,7 @@ class PlotData(BaseModel):
 
 
 class LinkingConfig(BaseRequest):
-    scorer: LinkingScorer = LinkingScorer.SILHOUETTE
+    scorer: LinkingScorer = LinkingScorer.WEIGHTED_SCORER
     metric: DistancesMetric = DistancesMetric.EUCLIDEAN
     embedding_source: EmbeddingSource = EmbeddingSource.OPENAI
     method: ClusteringMethod
