@@ -28,7 +28,8 @@ class Ranking(BaseModel):
 
 
 class Configuration(BaseModel):
-    summarize_thread_pool: int
+    category_async_pool_size: int
+    summarize_async_pool_size: int
     short_ops_timeout: int
     long_ops_timeout: int
     ranking: Ranking
