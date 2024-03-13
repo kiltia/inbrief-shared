@@ -57,7 +57,11 @@ class Context:
         self.classifier = get_classifier(
             self.shared_settings.components.classifier
         )
-        self.pg = Database(create_db_string(self.shared_settings.pg_creds))
+        pg_pswd = os.getenv("POSTGRES_PASSWORD")
+        pg_user = os.getenv("POSTGRES_USER")
+        self.pg = Database(
+            create_db_string(self.shared_settings.pg_creds, pg_pswd, pg_user)
+        )
         self.folder_repository = PgRepository(self.pg, Folder)
         self.source_repository = PgRepository(self.pg, Source)
         self.channel_repository = PgRepository(self.pg, Channel)
