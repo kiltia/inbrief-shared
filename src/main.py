@@ -88,7 +88,10 @@ async def parse(request: ParseRequest) -> ParseResponse:
             skipped_channel_ids=skipped_channel_ids,
         )
     else:
-        return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
+        return JSONResponse(
+            status_code=status.HTTP_204_NO_CONTENT,
+            content={"message": "Nothing was found"},
+        )
 
 
 @app.get(ScraperRoutes.SYNC)

@@ -68,6 +68,10 @@ def get_classifier(classifier_name: str):
             logging.error(
                 f"Got {type(e).__name__} exception while initializing {classifier_name}: {e}"
             )
+    elif classifier_name is None:
+        logger.warn(
+            "Classifier is not defined in config! Classification of scraped texts will not be carried out."
+        )
     else:
         logging.error(f"Classifier {classifier_name} doesn't exist")
     return classifier
