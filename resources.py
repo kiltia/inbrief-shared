@@ -8,10 +8,8 @@ from pydantic_settings import BaseSettings
 from shared.models import JSONSettings
 
 
-class DatabaseCredentials(BaseModel):
+class DatabaseConfig(BaseModel):
     driver: str
-    username: str
-    password: str
     url: str
     port: int
     db_name: str
@@ -37,7 +35,7 @@ class Configuration(BaseModel):
 
 class SharedResources(JSONSettings):
     components: ComponentSettings
-    pg_creds: DatabaseCredentials
+    pg_creds: DatabaseConfig
     config: Configuration
 
     def __init__(self, path: str):

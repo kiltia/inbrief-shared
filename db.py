@@ -5,7 +5,7 @@ from asyncpg.exceptions import UniqueViolationError
 from databases import Database
 from pydantic import BaseModel, TypeAdapter
 
-from shared.resources import DatabaseCredentials
+from shared.resources import DatabaseConfig
 
 logger = logging.getLogger("databases")
 
@@ -92,5 +92,5 @@ class PgRepository(AbstractRepository):
             await self.update(entity, fields)
 
 
-def create_db_string(creds: DatabaseCredentials):
-    return f"{creds.driver}://{creds.username}:{creds.password}@{creds.url}:{creds.port}/{creds.db_name}"
+def create_db_string(creds: DatabaseConfig, password: str, username: str):
+    return f"{creds.driver}://{username}:{password}@{creds.url}:{creds.port}/{creds.db_name}"
