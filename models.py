@@ -107,6 +107,7 @@ class Density(str, Enum):
 class UserFeedbackValue(str, Enum):
     LIKE = "like"
     BAD_LINKAGE = "bad_linkage"
+    BAD_CATEGORIZING = "bad_categorizing"
     LEXICAL_OR_GRAMMAR_ERRORS = "errors"
     FAKE_NEWS = "fake_news"
     SUMMARY_TOO_SHORT = "too_short"
