@@ -244,15 +244,18 @@ class CategorizeRequest(BaseRequest):
 class SummarizeRequest(ExternalRequest):
     config_id: int
     story_id: str
+    preset_id: str
     required_density: List[Density]
 
 
 class CategoryTitleRequest(ExternalRequest):
     config_id: int
+    preset_id: str
     texts: List[str]
 
 
 class FetchRequest(ExternalRequest):
+    preset_id: str
     end_date: str
     offset_date: str | None = None
     social: bool = False
@@ -295,10 +298,6 @@ class CallbackPatchRequest(BaseRequest):
 
 class UserRequest(ExternalRequest):
     chat_id: int
-
-
-class ChangePresetRequest(BaseRequest):
-    cur_preset: UUID
 
 
 class PartialPresetUpdate(ExternalRequest):

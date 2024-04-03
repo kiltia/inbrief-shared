@@ -96,7 +96,6 @@ class Preset(Entity):
 
 class User(Entity):
     chat_id: int
-    cur_preset: UUID | None = None
 
     _table_name: ClassVar[str] = "users"
     _pk: ClassVar[str] = "chat_id"
