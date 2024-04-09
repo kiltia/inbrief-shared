@@ -20,8 +20,8 @@ RUN \
     --mount=type=bind,source=requirements.lock,target=requirements.lock \
     --mount=type=bind,source=requirements-dev.lock,target=requirements-dev.lock \
     --mount=type=bind,source=.python-version,target=.python-version \
-    rye sync --no-lock --no-dev \
-    && rye run python -W ignore -m nltk.downloader -d .venv/nltk_data punkt stopwords
+    --mount=type=bind,source=README.md,target=README.md \
+    rye sync --no-lock --no-dev
 
 
 ENV PATH="$WD_NAME/.venv/bin:$PATH"
