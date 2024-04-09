@@ -25,7 +25,6 @@ def get_worker(
     **kwargs,
 ):
     client = ctx.client
-    classifier = ctx.classifier
 
     async def get_content(message) -> Source | None:
         if message.message in ["", None]:
@@ -92,16 +91,6 @@ def get_worker(
 
         content["embeddings"] = json.dumps(content["embeddings"])
         logger.debug(f"Ended generating embeddings for {message.id}")
-
-        logger.debug(f"Started classification {message.id}")
-        content.update(
-            {
-                "label": None
-                if classifier is None
-                else classifier.get_labels([message.message])[0]
-            }
-        )
-        logger.debug(f"Ended classification {message.id}")
         logger.debug(f"Ended parsing message {message.id}")
         return Source.parse_obj(content)
 

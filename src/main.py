@@ -3,7 +3,6 @@ import os
 from contextlib import asynccontextmanager
 
 from asgi_correlation_id import CorrelationIdMiddleware
-from classifiers import get_classifier
 from databases import Database
 from embedders import init_embedders
 from fastapi import FastAPI, status
@@ -53,9 +52,6 @@ class Context:
         self.openai_client = get_async_client(os.getenv("OPENAI_API_KEY"))
         self.shared_settings = SharedResources(
             f"{SHARED_CONFIG_PATH}/settings.json"
-        )
-        self.classifier = get_classifier(
-            self.shared_settings.components.classifier
         )
         pg_pswd = os.getenv("POSTGRES_PASSWORD")
         pg_user = os.getenv("POSTGRES_USER")
