@@ -1,6 +1,3 @@
-[submodule "openai-api"]
-	path = openai-api
-	url = git@github.com:kiltia/openai-api.git
 [submodule "openai_api"]
 	path = openai_api
 	url = git@github.com:kiltia/openai-api.git
