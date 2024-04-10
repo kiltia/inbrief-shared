@@ -33,3 +33,5 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/inbrief_scraper"]
+[tool.rye.workspace]
+members = ["shared", "openai_api"]

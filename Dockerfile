@@ -1,4 +1,4 @@
-FROM python:3.11 AS builder
+FROM python:3.12 AS builder
 
 ENV PIP_DEFAULT_TIMEOUT=200 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 
@@ -10,27 +10,24 @@ ENV WD_NAME=/app
 WORKDIR $WD_NAME
 RUN curl -sSf https://rye-up.com/get | RYE_INSTALL_OPTION="--yes" \
                                        RYE_NO_AUTO_INSTALL=1  \
-                                       RYE_TOOLCHAIN_VERSION="3.11" \
                                        bash \
-&& rye config --set-bool behavior.use-uv=true
+&& rye config --set-bool behavior.use-uv=true --set-bool autosync=false
 
 
-RUN \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    --mount=type=bind,source=requirements.lock,target=requirements.lock \
-    --mount=type=bind,source=requirements-dev.lock,target=requirements-dev.lock \
-    --mount=type=bind,source=.python-version,target=.python-version \
-    --mount=type=bind,source=README.md,target=README.md \
-    rye sync --no-lock --no-dev
+COPY README.md README.md
+COPY .python-version .python-version
+COPY pyproject.toml pyproject.toml
+COPY requirements.lock* requirements.lock
+RUN rye sync --no-lock --no-dev
 
 
 ENV PATH="$WD_NAME/.venv/bin:$PATH"
 COPY openai_api openai_api
-RUN pip install -e openai_api
+RUN rye add openai_api --path openai_api
 COPY shared shared
-RUN pip install -e shared
+RUN rye add shared --path shared
 
-FROM python:3.11-slim as runtime
+FROM python:3.12-slim as runtime
 
 ENV WD_NAME=/app
 WORKDIR $WD_NAME
