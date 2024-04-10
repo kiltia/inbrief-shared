@@ -18,14 +18,16 @@ COPY README.md README.md
 COPY .python-version .python-version
 COPY pyproject.toml pyproject.toml
 COPY requirements.lock* requirements.lock
+
+COPY openai_api openai_api
+COPY shared shared
+RUN rye add openai_api --path ./openai_api
+RUN rye add shared --path ./shared
+
 RUN rye sync --no-lock --no-dev
 
 
 ENV PATH="$WD_NAME/.venv/bin:$PATH"
-COPY openai_api openai_api
-RUN rye add openai_api --path openai_api
-COPY shared shared
-RUN rye add shared --path shared
 
 FROM python:3.12-slim as runtime
 
