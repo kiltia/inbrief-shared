@@ -6,19 +6,23 @@ from fastapi import FastAPI
 from matcher import Matcher
 from pydantic import TypeAdapter
 
+from shared.exceptions import unexpected_exception_handler
 from shared.logger import configure_logging
 from shared.models import LinkingRequest, LinkingResponse
 from shared.routes import LinkerRoutes
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_: FastAPI):
     configure_logging()
     yield
 
 
 app = FastAPI(lifespan=lifespan)
+
 app.add_middleware(CorrelationIdMiddleware, validator=None)
+
+app.add_exception_handler(Exception, unexpected_exception_handler)
 
 
 logger = logging.getLogger("linker")
