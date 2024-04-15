@@ -1,0 +1,12 @@
+[submodule "shared"]
+	path = shared
+	url = git@github.com:kiltia/inbrief-shared.git
+[submodule "openai_api"]
+	path = openai_api
+	url = git@github.com:kiltia/openai-api.git
+[submodule "linker"]
+	path = linker
+	url = git@github.com:kiltia/inbrief-linker.git
+[submodule "scraper"]
+	path = scraper
+	url = git@github.com:kiltia/inbrief-scraper.git
