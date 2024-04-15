@@ -1,0 +1,65 @@
+services:
+  linker:
+    container_name: inbrief-linker
+    build:
+      context: .
+      dockerfile: linker/Dockerfile
+    ports:
+      - "6002:8000"
+    environment:
+      - WEB_CONCURRENCY=${LINKER_WORKERS:-1}
+    volumes:
+      - ./config:/config
+      # Comment this if you don't want to use hot reload inside containers
+      - ./linker/src:/app/src
+      - ./shared:/app/shared
+      - ./openai_api:/app/openai_api
+    command: ${FLAGS:-}
+    depends_on:
+      db:
+        condition: service_healthy
+  scraper:
+    container_name: inbrief-scraper
+    build:
+      context: .
+      dockerfile: scraper/Dockerfile
+    volumes:
+      - type: bind
+        source: ./scraper/.env
+        target: /app/.env
+      - ./scraper/sessions:/app/sessions
+      - ./scraper/cache:/app/cache
+      - ./scraper/models:/app/models
+      # Comment this if you don't want to use hot reload inside containers
+      - ./scraper/src:/app/src
+      - ./shared:/app/shared
+      - ./openai_api:/app/openai_api
+    command: ${FLAGS:-}
+    ports:
+      - "6003:8000"
+    environment:
+      - WEB_CONCURRENCY=${SCRAPER_WORKERS:-1}
+      - OPENAI_API_KEY=$OPENAI_API_KEY
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-1234}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    container_name: inbrief-db
+    image: postgres:16.0
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-1234}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db/data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: "pg_isready --username=postgres && psql --username=postgres --list"
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

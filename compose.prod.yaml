@@ -1,0 +1,47 @@
+services:
+  linker:
+    container_name: linker
+    build:
+      context: .
+      dockerfile: linker/Dockerfile
+    environment:
+      - WEB_CONCURRENCY=${LINKER_WORKERS:-1}
+    volumes:
+      - ./config:/config
+    restart: always
+  scraper:
+    container_name: scraper
+    build:
+      context: .
+      dockerfile: scraper/Dockerfile
+    volumes:
+      - ./scraper/.env:/app/.env
+      - ./config:/config
+      - ./scraper/sessions:/app/sessions
+      - ./scraper/cache:/app/cache
+      - ./scraper/models:/app/models
+    environment:
+      - WEB_CONCURRENCY=${SCRAPER_WORKERS:-1}
+      - OPENAI_API_KEY=$OPENAI_API_KEY
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Please, set Postgres password}
+      - POSTGRES_USER=${POSTGRES_USER:?Please, set Postgres username}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+  db:
+    container_name: db
+    image: postgres:16.0
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Please, set Postgres password}
+      - POSTGRES_USER=${POSTGRES_USER:?Please, set Postgres username}
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db/data:/var/lib/postgresql/data
+    healthcheck:
+      test: "pg_isready --username=postgres && psql --username=postgres --list"
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
