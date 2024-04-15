@@ -11,21 +11,21 @@ WORKDIR $WD_NAME
 RUN curl -sSf https://rye-up.com/get | RYE_INSTALL_OPTION="--yes" \
                                        RYE_NO_AUTO_INSTALL=1  \
                                        bash \
-&& rye config --set-bool behavior.use-uv=true --set-bool autosync=false
+&& rye config --set-bool behavior.use-uv=true \
+&& rye config --set-bool autosync=false
 
 
-COPY README.md README.md
-COPY .python-version .python-version
-COPY pyproject.toml pyproject.toml
-COPY requirements.lock* requirements.lock
+COPY scraper/.python-version* .python-version
+COPY scraper/README.md README.md
+COPY scraper/pyproject.toml pyproject.toml
+COPY scraper/requirements.lock* requirements.lock
 
 COPY openai_api openai_api
+RUN rye add openai_api --path openai_api
 COPY shared shared
-RUN rye add openai_api --path ./openai_api
-RUN rye add shared --path ./shared
+RUN rye add shared --path shared
 
 RUN rye sync --no-lock --no-dev
-
 
 ENV PATH="$WD_NAME/.venv/bin:$PATH"
 
@@ -35,11 +35,11 @@ ENV WD_NAME=/app
 WORKDIR $WD_NAME
 
 ENV PATH="$WD_NAME/.venv/bin:$PATH"
-ENV PYTHONPATH="$PYTHONPATH:$WD_NAME/.venv/lib/python3.11/site-packages"
+ENV PYTHONPATH="$PYTHONPATH:$WD_NAME/.venv/lib/python3.12/site-packages"
 
 COPY --from=builder /opt/rye /opt/rye
 COPY --from=builder $WD_NAME/.venv .venv
 COPY --from=builder $WD_NAME/shared shared
 COPY --from=builder $WD_NAME/openai_api openai_api
-COPY src src
+COPY scraper/src src
 ENTRYPOINT ["uvicorn", "--app-dir", "src", "--host", "0.0.0.0", "main:app"]

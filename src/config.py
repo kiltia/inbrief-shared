@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 
 
 class Credentials(BaseSettings):
-    session: str
+    session: str = ""
     api_hash: str
     api_id: str
 

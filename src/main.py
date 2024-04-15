@@ -8,7 +8,7 @@ from embedders import init_embedders
 from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 from telethon import TelegramClient
-from utils import SESSION_PATH
+from telethon.sessions import StringSession
 
 from config import Credentials
 from openai_api import get_async_client
@@ -44,7 +44,7 @@ class Context:
     def __init__(self):
         self.creds = Credentials()
         self.client = TelegramClient(
-            f"{SESSION_PATH}/{self.creds.session}",
+            StringSession(self.creds.session),
             self.creds.api_id,
             self.creds.api_hash,
             system_version="4.16.30-vxCUSTOM",
