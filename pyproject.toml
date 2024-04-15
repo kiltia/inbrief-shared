@@ -1,12 +1,7 @@
 [project]
 name = "shared"
 version = "0.1.0"
-dependencies = [
-    "pydantic>=2.6.4",
-    "pydantic-settings>=2.2.1",
-    "databases[asyncpg]>=0.9.0",
-    "numpy>=1.26.4",
-]
+dependencies = []
 readme = "README.md"
 requires-python = ">= 3.11"
 
