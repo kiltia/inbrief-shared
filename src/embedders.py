@@ -15,7 +15,7 @@ logger = logging.getLogger("scraper")
 
 
 class EmbeddingProvider:
-    def get_embeddings(self, inputs: list, **kwargs):
+    def get_embeddings(self, inputs: list[str], **kwargs):
         pass
 
     @classmethod
@@ -23,7 +23,7 @@ class EmbeddingProvider:
         return Case.to_kebab(self.__name__)
 
 
-class OpenAiEmbedder(EmbeddingProvider):
+class OpenAi(EmbeddingProvider):
     # TODO(nrydanov): Pass default parameter from configuration file instead
     def __init__(self, model: str = "text-embedding-3-large") -> None:
         self.model = model
@@ -34,7 +34,7 @@ class OpenAiEmbedder(EmbeddingProvider):
         )
 
 
-class MiniLmEmbedder(EmbeddingProvider):
+class MiniLm(EmbeddingProvider):
     TOKENIZER = "nreimers/mmarco-mMiniLMv2-L12-H384-v1"
 
     # TODO(nrydanov): Pass default parameter from configuration file instead
@@ -42,7 +42,7 @@ class MiniLmEmbedder(EmbeddingProvider):
         if not weights_path:
             weights_path = f"{CACHE_PATH}/mini-lm"
         self.tokenizer = AutoTokenizer.from_pretrained(
-            MiniLmEmbedder.TOKENIZER, cache_dir=weights_path
+            MiniLm.TOKENIZER, cache_dir=weights_path
         )
         self.model = AutoModel.from_pretrained(weights_path)
 
@@ -68,7 +68,7 @@ class MiniLmEmbedder(EmbeddingProvider):
         return results
 
 
-class FastTextEmbedder(EmbeddingProvider):
+class FastText(EmbeddingProvider):
     # TODO(nrydanov): Pass default parameter from configuration file instead
     def __init__(self, weights_path=None):
         if not weights_path:

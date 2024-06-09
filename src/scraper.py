@@ -5,7 +5,7 @@ from concurrent.futures._base import TimeoutError
 from datetime import datetime
 from typing import List, Tuple
 
-from embedders import OpenAiEmbedder, get_embedders
+from embedders import OpenAi, get_embedders
 from telethon.errors.rpcbaseerrors import BadRequestError
 from telethon.errors.rpcerrorlist import ChannelPrivateError, MsgIdInvalidError
 from telethon.tl.functions.channels import GetFullChannelRequest
@@ -79,7 +79,7 @@ def get_worker(
         # TODO(nrydanov): Move embedding retrieval out of this function
         # to enable batch processing on GPU to increase overall performance
         for emb in embedders:
-            if isinstance(emb, OpenAiEmbedder):
+            if isinstance(emb, OpenAi):
                 embeddings = (
                     await emb.aget_embeddings(
                         [message.message], ctx.openai_client
