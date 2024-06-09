@@ -8,9 +8,9 @@ ENV PATH="$RYE_HOME/shims:$PATH"
 ENV UV_HTTP_TIMEOUT=1200
 ENV WD_NAME=/app
 WORKDIR $WD_NAME
-RUN curl -sSf https://rye-up.com/get | RYE_INSTALL_OPTION="--yes" \
-                                       RYE_NO_AUTO_INSTALL=1  \
-                                       bash \
+RUN curl -sSf https://rye.astral.sh/get | RYE_INSTALL_OPTION="--yes" \
+                                          RYE_NO_AUTO_INSTALL=1  \
+                                          bash \
 && rye config --set-bool behavior.use-uv=true \
 && rye config --set-bool autosync=false
 

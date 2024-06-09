@@ -29,15 +29,15 @@ class Matcher:
                 embeddings = [
                     x + y
                     for x, y in zip(
-                        embs["mini-lm-embedder"],
-                        embs["fast-text-embedder"],
+                        embs["mini-lm"],
+                        embs["fast-text"],
                         strict=True,
                     )
                 ]
             case EmbeddingSource.OPENAI:
-                embeddings = embs["open-ai-embedder"]
+                embeddings = embs["open-ai"]
             case EmbeddingSource.MLM:
-                embeddings = embs["mini-lm-embedder"]
+                embeddings = embs["mini-lm"]
 
         return np.array(embeddings)
 
@@ -55,11 +55,13 @@ class Matcher:
         self,
         method_name,
         params_range,
-        immutable_config,
+        immutable_config = None,
         *,
         n_components=None,
         return_plot_data=False,
     ):
+        if immutable_config is None:
+            immutable_config = {}
         logger.debug(f"Using immutable config: {immutable_config}")
         embeddings = self._retrieve_embeddings()
         method = get_clustering_method(method_name.value)(immutable_config)

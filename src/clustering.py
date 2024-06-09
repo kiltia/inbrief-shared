@@ -89,12 +89,12 @@ class HDBSCAN(BaseCluster):
 
 
 class KMeans(BaseCluster):
-    def __init__(self, immutable_config):
+    def __init__(self, immutable_config = {}):
         super().__init__(cls.KMeans, immutable_config)
 
     def fine_tune(self, X, scorer, metric, params_range, sort=False):
         results = []
-        n_clusters_range = params_range["n_clusters"]
+        n_clusters_range = list(map(lambda x: int(x), params_range["n_clusters"]))
         for n_clusters in range(
             n_clusters_range[0], min(n_clusters_range[1], len(X))
         ):
