@@ -16,7 +16,7 @@ from scraper import parse_channels, retrieve_channels
 from shared.db import PgRepository, create_db_string
 from shared.entities import Channel, Folder, Source
 from shared.logger import configure_logging
-from shared.models import ParseRequest, ParseResponse
+from shared.models import ScrapeRequest, ScrapeResponse
 from shared.resources import SharedResources
 from shared.routes import ScraperRoutes
 from shared.utils import SHARED_CONFIG_PATH
@@ -72,8 +72,8 @@ class Context:
 ctx = Context()
 
 
-@app.post(ScraperRoutes.PARSE)
-async def parse(request: ParseRequest) -> ParseResponse:
+@app.post(ScraperRoutes.SCRAPE)
+async def parse(request: ScrapeRequest) -> ScrapeResponse:
     logger.info("Started serving scrapping request")
     entities, skipped_channel_ids = await parse_channels(
         ctx, **request.model_dump()
@@ -83,7 +83,7 @@ async def parse(request: ParseRequest) -> ParseResponse:
     if entities:
         await ctx.source_repository.add(entities, ignore_conflict=True)
         logger.debug("Data was saved to database successfully")
-        return ParseResponse(
+        return ScrapeResponse(
             sources=entities,
             skipped_channel_ids=skipped_channel_ids,
         )
