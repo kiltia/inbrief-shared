@@ -1,5 +1,5 @@
 class ScraperRoutes:
-    PARSE = "/parse"
+    SCRAPE = "/scrape"
     SYNC = "/sync"
 
 

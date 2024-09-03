@@ -42,7 +42,7 @@ class PresetData(BaseModel):
 
 class EmbeddingSource(str, Enum):
     FTMLM = "ft+mlm"
-    OPENAI = "openai"
+    OPENAI = "open-ai"
     MLM = "mlm"
 
 
@@ -136,7 +136,7 @@ class ExternalRequest(BaseRequest):
 # Scraper API
 
 
-class ParseRequest(BaseRequest):
+class ScrapeRequest(BaseRequest):
     channels: List[int]
     required_embedders: List[str] | None = None
     offset_date: str | None = None
@@ -144,7 +144,7 @@ class ParseRequest(BaseRequest):
     social: bool = False
 
 
-class ParseResponse(BaseResponse):
+class ScrapeResponse(BaseResponse):
     sources: List[Source]
     skipped_channel_ids: List[int]
 
