@@ -1,0 +1,5 @@
+*.lock
+.venv
+dist
+__pycache__
+*.ropeproject

@@ -1,0 +1,64 @@
+{
+    "components": {
+        "embedders": ["open-ai"],
+        "classifier": null,
+        "summarizing": ["openai"]
+    },
+    "config": {
+        "category_async_pool_size": 8,
+        "summarize_async_pool_size": 8,
+        "short_ops_timeout": 160,
+        "long_ops_timeout": 1200,
+        "ranking": {
+            "weights": {
+                "size_scorer": 1,
+                "reaction_scorer": 0.5,
+                "view_scorer": 0.75,
+                "comment_scorer": 0.5
+            }
+        }
+  },
+  "pg_creds": {
+    "driver": "postgres",
+    "url": "db",
+    "port": "5432",
+    "db_name": "inbrief"
+  },
+  "logger": {
+    "version": 1,
+    "disable_existing_loggers": false,
+    "filters": {
+      "correlation_id": {
+        "()": "asgi_correlation_id.CorrelationIdFilter",
+        "uuid_length": 64,
+        "default_value": "-"
+      }
+    },
+    "formatters": {
+      "console": {
+        "class": "logging.Formatter",
+        "datefmt": "%H:%M:%S",
+        "format": "[%(levelname)s] [%(asctime)s] %(message)s (%(correlation_id)s)"
+      }
+    },
+    "handlers": {
+      "console": {
+        "class": "logging.StreamHandler",
+        "filters": ["correlation_id"],
+        "formatter": "console"
+      }
+    },
+    "loggers": {
+      "scraper": { "handlers": ["console"], "level": "DEBUG", "propagate": false},
+      "linker": { "handlers": ["console"], "level": "DEBUG", "propagate": false},
+      "summarizer": { "handlers": ["console"], "level": "DEBUG", "propagate": false},
+      "supervisor": { "handlers": ["console"], "level": "DEBUG", "propagate": false},
+      "dash": { "handlers": ["console"], "level": "DEBUG", "propagate": false},
+      "telebot": { "handlers": ["console"], "level": "DEBUG", "propagate": false},
+      "openai": { "handlers": ["console"], "level": "DEBUG", "propagate": false},
+      "databases": { "handlers": ["console"], "level": "INFO" },
+      "httpx": { "handlers": ["console"], "level": "INFO" },
+      "asgi_correlation_id": { "handlers": ["console"], "level": "INFO" }
+    }
+  }
+}
