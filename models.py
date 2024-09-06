@@ -5,7 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from shared.entities import Source, StorySources
+from shared.entities import StorySources
+import datetime
 
 
 class JSONSettings(BaseModel):
@@ -137,20 +138,33 @@ class ExternalRequest(BaseRequest):
 
 
 class ScrapeRequest(BaseRequest):
-    channels: List[int]
-    required_embedders: List[str] | None = None
-    offset_date: str | None = None
-    end_date: str
+    channels: List[int] = [2236047183]
+    required_embedders: List[str] | None = ["open-ai"]
+    offset_date: datetime.datetime | None = None
+    end_date: datetime.datetime
     social: bool = False
 
 
+class SourceOutput(BaseModel):
+    source_id: int
+    text: str
+    date: str
+    channel_id: int
+    reference: str
+    embeddings: dict
+    label: str | None = None
+    comments: list | None = None
+    reactions: str | None = None
+    views: int
+
+
 class ScrapeResponse(BaseResponse):
-    sources: List[Source]
-    skipped_channel_ids: List[int]
+    sources: list[SourceOutput]
+    skipped_channel_ids: list[int]
 
 
 class SyncRequest(BaseRequest):
-    chat_folder_link: str
+    chat_folder_link: str = "https://t.me/addlist/W9JQ42l78Kc5MTAy"
 
 
 # Linker API
@@ -202,7 +216,7 @@ class LinkingConfig(BaseRequest):
 
 
 class LinkingRequest(BaseRequest):
-    entries: List[Entry]
+    entries: list[Entry]
     config: LinkingConfig
     settings: dict
     return_plot_data: bool = False
@@ -245,13 +259,13 @@ class SummarizeRequest(ExternalRequest):
     config_id: int
     story_id: str
     preset_id: str
-    required_density: List[Density]
+    required_density: list[Density]
 
 
 class CategoryTitleRequest(ExternalRequest):
     config_id: int
     preset_id: str
-    texts: List[str]
+    texts: list[str]
 
 
 class FetchRequest(ExternalRequest):
