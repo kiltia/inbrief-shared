@@ -4,6 +4,7 @@ from logging.config import dictConfig
 
 from shared.utils import SHARED_CONFIG_PATH
 
+test = "123"
 
 def configure_logging(override_path=None) -> None:
     from functools import partial, partialmethod
