@@ -1,3 +1,0 @@
-[submodule "openai_api"]
-	path = openai_api
-	url = git@github.com:kiltia/openai-api.git
