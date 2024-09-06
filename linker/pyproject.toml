@@ -1,0 +1,30 @@
+[project]
+name = "inbrief-linker"
+version = "0.1.0"
+description = "Add your description here"
+dependencies = [
+    "hdbscan>=0.8.33",
+    "pydantic>=2.7.0",
+    "scikit-learn>=1.4.2",
+    "fastapi>=0.110.1",
+    "numpy>=1.26.4",
+    "asgi-correlation-id>=4.3.1",
+    "pydantic-settings>=2.2.1",
+    "uvicorn>=0.29.0",
+]
+readme = "README.md"
+requires-python = ">= 3.12"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = []
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/linker"]
