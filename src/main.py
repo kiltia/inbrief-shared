@@ -12,7 +12,7 @@ from telethon.sessions import StringSession
 
 from config import Credentials
 from openai_api import get_async_client
-from scraper import parse_channels, retrieve_channels
+from scraper import scrape_channels, retrieve_channels
 from shared.db import PgRepository, create_db_string
 from shared.entities import Channel, Folder, Source
 from shared.logger import configure_logging
@@ -50,9 +50,7 @@ class Context:
             system_version="4.16.30-vxCUSTOM",
         )
         self.openai_client = get_async_client(os.getenv("OPENAI_API_KEY"))
-        self.shared_settings = SharedResources(
-            f"{SHARED_CONFIG_PATH}/settings.json"
-        )
+        self.shared_settings = SharedResources(f"{SHARED_CONFIG_PATH}/settings.json")
         pg_pswd = os.getenv("POSTGRES_PASSWORD")
         pg_user = os.getenv("POSTGRES_USER")
         self.pg = Database(
@@ -75,16 +73,24 @@ ctx = Context()
 @app.post(ScraperRoutes.SCRAPE)
 async def parse(request: ScrapeRequest) -> ScrapeResponse:
     logger.info("Started serving scrapping request")
-    entities, skipped_channel_ids = await parse_channels(
-        ctx, **request.model_dump()
-    )
+    entities, skipped_channel_ids = await scrape_channels(ctx, **request.model_dump())
     # TODO(nrydanov): Need to add caching there in case all posts for required
     # time period are already stored in database (#137)
     if entities:
         await ctx.source_repository.add(entities, ignore_conflict=True)
+
+        def convert_to_output(x: Source):
+            dumped = x.model_dump()
+
+            dumped["embeddings"] = eval(x.embeddings)
+
+            return dumped
+
+        output = list(map(convert_to_output, entities))
+
         logger.debug("Data was saved to database successfully")
         return ScrapeResponse(
-            sources=entities,
+            sources=output,
             skipped_channel_ids=skipped_channel_ids,
         )
     else:

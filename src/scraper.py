@@ -106,17 +106,13 @@ async def get_content_from_channel(
     **kwargs,
 ) -> List[Source]:
     batch = []
-    end_date = datetime.strptime(end_date, DATE_FORMAT)
-    offset_date = (
-        datetime.strptime(offset_date, DATE_FORMAT) if offset_date else None
-    )
     api_iterator = ctx.client.iter_messages(
         channel_entity, offset_date=offset_date
     )
     get_content = get_worker(channel_entity, ctx, embedders, **kwargs)
     async for message in api_iterator:
         try:
-            if message.date.replace(tzinfo=None) < end_date:
+            if message.date < end_date:
                 break
             batch.append(get_content(message))
         except TimeoutError:
@@ -155,7 +151,7 @@ async def retrieve_channels(ctx, chat_folder_link: str):
     return ids
 
 
-async def parse_channels(
+async def scrape_channels(
     ctx,
     channels: List[int],
     required_embedders: List[str],
